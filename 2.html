@@ -330,23 +330,31 @@
             letter-spacing: 0.3px;
         }
 
-        /* ===== 浮動導航 ===== */
+        /* ===== 浮動導航 (修復: 確保初始可見 + 防止溢出) ===== */
         .floating-nav {
             position: fixed;
             display: flex;
             gap: 6px;
-            z-index: 1000;
+            z-index: 1150;
+            /* 提高至所有頂層元素之上，但低於模態層 */;
             top: 80px;
             right: 12px;
             touch-action: none;
             user-select: none;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            /* 防止意外被隱藏 */;
+            max-width: 90vw;
+            flex-wrap: nowrap;
+            transition: none;
         }
         .floating-nav-btn {
             width: 42px;
             height: 42px;
             border-radius: 50%;
             border: 2px solid rgba(255, 255, 255, 0.5);
-            background: rgba(30, 32, 40, 0.65);
+            background: rgba(30, 32, 40, 0.75);
             backdrop-filter: blur(8px);
             color: white;
             font-size: 1.2rem;
@@ -355,14 +363,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
             transition: all 0.2s ease;
-            opacity: 0.6;
+            opacity: 0.85;
             touch-action: manipulation;
+            flex-shrink: 0;
+            min-width: 42px;
         }
         .floating-nav-btn:hover {
-            opacity: 0.9;
+            opacity: 1;
             transform: scale(1.05);
+            background: rgba(50, 52, 60, 0.85);
         }
         .floating-nav-btn.floating-toggle-btn {
             width: auto;
@@ -373,57 +384,206 @@
             white-space: nowrap;
         }
         .floating-nav-btn.floating-toggle-btn.active {
-            background: rgba(76, 175, 80, 0.5);
-            border-color: rgba(76, 175, 80, 0.6);
-            box-shadow: 0 0 14px rgba(76, 175, 80, 0.3);
+            background: rgba(76, 175, 80, 0.55);
+            border-color: rgba(76, 175, 80, 0.7);
+            box-shadow: 0 0 14px rgba(76, 175, 80, 0.35);
+        }
+        /* 拖動中增加回饋 */
+        .floating-nav.dragging .floating-nav-btn {
+            opacity: 0.7;
+            transform: scale(0.95);
         }
 
         /* ===== 響應式 ===== */
         @media (max-width: 768px) {
-            .question-indicator { font-size: 0.8rem; padding: 3px 12px; top: 10px; }
-            .home-button, .nav-button { width: 36px; height: 36px; font-size: 1rem; }
-            .controls { padding: 8px 10px 10px; }
-            .toggle-btn { padding: 5px 10px; font-size: 0.7rem; }
-            .nav-btn { width: 30px; height: 30px; font-size: 0.9rem; }
-            .number-btn { min-width: 28px; height: 28px; font-size: 0.7rem; padding: 0 4px; }
-            .floating-nav { top: 70px; right: 8px; gap: 4px; }
-            .floating-nav-btn { width: 36px; height: 36px; font-size: 1rem; }
-            .floating-nav-btn.floating-toggle-btn { min-width: 36px; padding: 0 10px; font-size: 0.7rem; }
-            .view-indicator { padding: 4px 14px; bottom: 12px; gap: 10px; }
-            .view-indicator .dot { width: 6px; height: 6px; }
-            .view-indicator .page-label { font-size: 0.7rem; }
-            .key-hint { font-size: 0.6rem; }
+            .question-indicator {
+                font-size: 0.8rem;
+                padding: 3px 12px;
+                top: 10px;
+            }
+            .home-button,
+            .nav-button {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+            .controls {
+                padding: 8px 10px 10px;
+            }
+            .toggle-btn {
+                padding: 5px 10px;
+                font-size: 0.7rem;
+            }
+            .nav-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+            .number-btn {
+                min-width: 28px;
+                height: 28px;
+                font-size: 0.7rem;
+                padding: 0 4px;
+            }
+            .floating-nav {
+                top: 70px;
+                right: 8px;
+                gap: 4px;
+            }
+            .floating-nav-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+                min-width: 36px;
+            }
+            .floating-nav-btn.floating-toggle-btn {
+                min-width: 36px;
+                padding: 0 10px;
+                font-size: 0.7rem;
+            }
+            .view-indicator {
+                padding: 4px 14px;
+                bottom: 12px;
+                gap: 10px;
+            }
+            .view-indicator .dot {
+                width: 6px;
+                height: 6px;
+            }
+            .view-indicator .page-label {
+                font-size: 0.7rem;
+            }
+            .key-hint {
+                font-size: 0.6rem;
+            }
         }
         @media (max-width: 480px) {
-            .question-indicator { font-size: 0.7rem; padding: 2px 10px; top: 8px; }
-            .home-button, .nav-button { width: 32px; height: 32px; font-size: 0.85rem; }
-            .controls { padding: 6px 6px 8px; }
-            .toggle-btn { padding: 4px 8px; font-size: 0.65rem; }
-            .nav-btn { width: 26px; height: 26px; font-size: 0.8rem; }
-            .number-btn { min-width: 24px; height: 24px; font-size: 0.6rem; padding: 0 3px; border-radius: 12px; }
-            .floating-nav { top: 58px; right: 6px; gap: 3px; }
-            .floating-nav-btn { width: 32px; height: 32px; font-size: 0.85rem; }
-            .floating-nav-btn.floating-toggle-btn { min-width: 32px; padding: 0 8px; font-size: 0.6rem; }
-            .view-indicator { padding: 3px 12px; bottom: 10px; gap: 8px; }
-            .view-indicator .dot { width: 5px; height: 5px; }
-            .view-indicator .page-label { font-size: 0.65rem; }
-            .key-hint { font-size: 0.55rem; margin-top: 2px; }
-            .buttons-row { gap: 3px; }
-            .main-controls { gap: 4px; }
+            .question-indicator {
+                font-size: 0.7rem;
+                padding: 2px 10px;
+                top: 8px;
+            }
+            .home-button,
+            .nav-button {
+                width: 32px;
+                height: 32px;
+                font-size: 0.85rem;
+            }
+            .controls {
+                padding: 6px 6px 8px;
+            }
+            .toggle-btn {
+                padding: 4px 8px;
+                font-size: 0.65rem;
+            }
+            .nav-btn {
+                width: 26px;
+                height: 26px;
+                font-size: 0.8rem;
+            }
+            .number-btn {
+                min-width: 24px;
+                height: 24px;
+                font-size: 0.6rem;
+                padding: 0 3px;
+                border-radius: 12px;
+            }
+            .floating-nav {
+                top: 58px;
+                right: 6px;
+                gap: 3px;
+            }
+            .floating-nav-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 0.85rem;
+                min-width: 32px;
+            }
+            .floating-nav-btn.floating-toggle-btn {
+                min-width: 32px;
+                padding: 0 8px;
+                font-size: 0.6rem;
+            }
+            .view-indicator {
+                padding: 3px 12px;
+                bottom: 10px;
+                gap: 8px;
+            }
+            .view-indicator .dot {
+                width: 5px;
+                height: 5px;
+            }
+            .view-indicator .page-label {
+                font-size: 0.65rem;
+            }
+            .key-hint {
+                font-size: 0.55rem;
+                margin-top: 2px;
+            }
+            .buttons-row {
+                gap: 3px;
+            }
+            .main-controls {
+                gap: 4px;
+            }
         }
         @media (orientation: landscape) and (max-height: 500px) {
-            .controls { padding: 4px 8px 6px; }
-            .toggle-btn { padding: 3px 8px; font-size: 0.6rem; }
-            .nav-btn { width: 24px; height: 24px; font-size: 0.7rem; }
-            .number-btn { min-width: 22px; height: 22px; font-size: 0.55rem; padding: 0 3px; }
-            .key-hint { display: none; }
-            .view-indicator { bottom: 6px; padding: 2px 10px; gap: 6px; }
-            .view-indicator .page-label { font-size: 0.6rem; }
-            .floating-nav { top: 50px; right: 6px; gap: 3px; }
-            .floating-nav-btn { width: 28px; height: 28px; font-size: 0.75rem; }
-            .floating-nav-btn.floating-toggle-btn { min-width: 28px; padding: 0 6px; font-size: 0.55rem; }
-            .question-indicator { font-size: 0.6rem; padding: 2px 8px; top: 6px; }
-            .home-button, .nav-button { width: 28px; height: 28px; font-size: 0.75rem; }
+            .controls {
+                padding: 4px 8px 6px;
+            }
+            .toggle-btn {
+                padding: 3px 8px;
+                font-size: 0.6rem;
+            }
+            .nav-btn {
+                width: 24px;
+                height: 24px;
+                font-size: 0.7rem;
+            }
+            .number-btn {
+                min-width: 22px;
+                height: 22px;
+                font-size: 0.55rem;
+                padding: 0 3px;
+            }
+            .key-hint {
+                display: none;
+            }
+            .view-indicator {
+                bottom: 6px;
+                padding: 2px 10px;
+                gap: 6px;
+            }
+            .view-indicator .page-label {
+                font-size: 0.6rem;
+            }
+            .floating-nav {
+                top: 50px;
+                right: 6px;
+                gap: 3px;
+            }
+            .floating-nav-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 0.75rem;
+                min-width: 28px;
+            }
+            .floating-nav-btn.floating-toggle-btn {
+                min-width: 28px;
+                padding: 0 6px;
+                font-size: 0.55rem;
+            }
+            .question-indicator {
+                font-size: 0.6rem;
+                padding: 2px 8px;
+                top: 6px;
+            }
+            .home-button,
+            .nav-button {
+                width: 28px;
+                height: 28px;
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
@@ -481,7 +641,7 @@
         </div>
     </div>
 
-    <!-- ===== 浮動導航 ===== -->
+    <!-- ===== 浮動導航 (修復: 加入 id 以便 JS 控制) ===== -->
     <div class="floating-nav" id="floating-nav">
         <div class="floating-nav-btn floating-toggle-btn" id="floating-toggle">全部顯示</div>
         <div class="floating-nav-btn" id="floating-prev">←</div>
@@ -533,8 +693,8 @@
             }
 
             // ----- 2. 圖層數據 -----
-            const layers0 = []; // e1.gif ~ eN.gif
-            const layers1 = []; // 1.gif ~ N.gif
+            const layers0 = [];
+            const layers1 = [];
             for (let i = 1; i <= question_no; i++) {
                 layers0.push({ id: 's0-l' + i, image: 'e' + i + '.gif' });
                 layers1.push({ id: 's1-l' + i, image: i + '.gif' });
@@ -557,7 +717,7 @@
             const viewLabel = document.getElementById('view-label');
 
             // ----- 4. 狀態 -----
-            let currentSlide = 0; // 0 = e0, 1 = 0
+            let currentSlide = 0;
             let currentLayerIndex = -1;
             let allVisible = false;
             let blinkInterval = null;
@@ -637,6 +797,7 @@
             }
 
             function hideAllLayers(slideIndex) { updateAllLayersVisibility(slideIndex, false); }
+
             function showAllLayers(slideIndex, opacityVal) { updateAllLayersVisibility(slideIndex, true, opacityVal || '0.5'); }
 
             function stopBlinking() {
@@ -779,13 +940,19 @@
 
             // ----- 10. 事件綁定 -----
             toggleAllBtn.addEventListener('click', toggleAllLayers);
-            floatingToggle.addEventListener('click', (e) => { if (!isDragging) toggleAllLayers(); });
+            floatingToggle.addEventListener('click', function(e) {
+                if (!isDragging) toggleAllLayers();
+            });
             prevLayerBtn.addEventListener('click', showPrevLayer);
             nextLayerBtn.addEventListener('click', showNextLayer);
-            floatingPrev.addEventListener('click', (e) => { if (!isDragging) showPrevLayer(); });
-            floatingNext.addEventListener('click', (e) => { if (!isDragging) showNextLayer(); });
+            floatingPrev.addEventListener('click', function(e) {
+                if (!isDragging) showPrevLayer();
+            });
+            floatingNext.addEventListener('click', function(e) {
+                if (!isDragging) showNextLayer();
+            });
 
-            document.addEventListener('keydown', (e) => {
+            document.addEventListener('keydown', function(e) {
                 if (e.key === 'ArrowRight') { showNextLayer();
                     e.preventDefault(); } else if (e.key === 'ArrowLeft') { showPrevLayer();
                     e.preventDefault(); } else if (e.key === ' ') { toggleAllLayers();
@@ -829,7 +996,7 @@
                 touchMoved = false;
             }, { passive: true });
 
-            // ----- 12. 浮動導航拖動 -----
+            // ----- 12. 浮動導航拖動 (修復: 增加邊界保護) -----
             function handleDragStart(e) {
                 const clientX = e.clientX || (e.touches && e.touches[0].clientX);
                 const clientY = e.clientY || (e.touches && e.touches[0].clientY);
@@ -837,7 +1004,7 @@
                 dragStartX = clientX;
                 dragStartY = clientY;
                 isPotentialDrag = true;
-                dragTimeout = setTimeout(() => {
+                dragTimeout = setTimeout(function() {
                     if (isPotentialDrag) startDragging(clientX, clientY);
                 }, DRAG_DELAY);
                 document.addEventListener('mousemove', handleDragMove);
@@ -857,12 +1024,14 @@
                     }
                 }
                 if (isDragging) {
-                    const x = clientX - dragOffsetX;
-                    const y = clientY - dragOffsetY;
-                    const maxX = window.innerWidth - floatingNav.offsetWidth;
-                    const maxY = window.innerHeight - floatingNav.offsetHeight;
-                    floatingNav.style.left = Math.min(Math.max(0, x), maxX) + 'px';
-                    floatingNav.style.top = Math.min(Math.max(0, y), maxY) + 'px';
+                    let x = clientX - dragOffsetX;
+                    let y = clientY - dragOffsetY;
+                    const maxX = window.innerWidth - floatingNav.offsetWidth - 10;
+                    const maxY = window.innerHeight - floatingNav.offsetHeight - 10;
+                    x = Math.min(Math.max(10, x), Math.max(10, maxX));
+                    y = Math.min(Math.max(10, y), Math.max(10, maxY));
+                    floatingNav.style.left = x + 'px';
+                    floatingNav.style.top = y + 'px';
                     floatingNav.style.right = 'auto';
                     if (e.touches) e.preventDefault();
                 }
@@ -871,10 +1040,12 @@
             function handleDragEnd() {
                 clearTimeout(dragTimeout);
                 if (isDragging) {
-                    localStorage.setItem('floatingNavPos', JSON.stringify({
-                        left: floatingNav.style.left,
-                        top: floatingNav.style.top
-                    }));
+                    try {
+                        localStorage.setItem('floatingNavPos', JSON.stringify({
+                            left: floatingNav.style.left,
+                            top: floatingNav.style.top
+                        }));
+                    } catch (e) {}
                 }
                 isDragging = false;
                 isPotentialDrag = false;
@@ -894,32 +1065,91 @@
                 dragOffsetY = clientY - rect.top;
             }
 
-            [floatingToggle, floatingPrev, floatingNext].forEach(btn => {
+            [floatingToggle, floatingPrev, floatingNext].forEach(function(btn) {
                 btn.addEventListener('mousedown', handleDragStart);
                 btn.addEventListener('touchstart', handleDragStart, { passive: true });
             });
 
-            const savedPos = localStorage.getItem('floatingNavPos');
-            if (savedPos) {
-                try { const pos = JSON.parse(savedPos);
-                    floatingNav.style.left = pos.left;
-                    floatingNav.style.top = pos.top;
-                    floatingNav.style.right = 'auto'; } catch (e) {}
+            // ----- 13. 修復: 驗證並恢復浮動導航位置 (核心修復) -----
+            function restoreFloatingNavPosition() {
+                // 確保導航在可視區域內
+                const navWidth = floatingNav.offsetWidth || 60;
+                const navHeight = floatingNav.offsetHeight || 150;
+                const maxX = window.innerWidth - navWidth - 20;
+                const maxY = window.innerHeight - navHeight - 20;
+                const minX = 10;
+                const minY = 10;
+
+                // 先嘗試從 localStorage 讀取
+                const savedPos = localStorage.getItem('floatingNavPos');
+                let useDefault = true;
+                let leftPos = null;
+                let topPos = null;
+
+                if (savedPos) {
+                    try {
+                        const pos = JSON.parse(savedPos);
+                        const left = parseFloat(pos.left);
+                        const top = parseFloat(pos.top);
+                        if (!isNaN(left) && !isNaN(top) && left >= minX && top >= minY && left <= maxX && top <= maxY) {
+                            leftPos = left;
+                            topPos = top;
+                            useDefault = false;
+                        }
+                    } catch (e) {}
+                }
+
+                if (useDefault) {
+                    // 使用 CSS 預設值 (右上角)
+                    floatingNav.style.right = '12px';
+                    floatingNav.style.top = '80px';
+                    floatingNav.style.left = 'auto';
+                    // 清除無效的 localStorage 記錄
+                    try {
+                        localStorage.removeItem('floatingNavPos');
+                    } catch (e) {}
+                } else {
+                    floatingNav.style.left = leftPos + 'px';
+                    floatingNav.style.top = topPos + 'px';
+                    floatingNav.style.right = 'auto';
+                }
+
+                // 強制確保 visible
+                floatingNav.style.opacity = '1';
+                floatingNav.style.visibility = 'visible';
+                floatingNav.style.display = 'flex';
             }
 
-            window.addEventListener('resize', function() {
-                const rect = floatingNav.getBoundingClientRect();
-                const maxX = window.innerWidth - floatingNav.offsetWidth;
-                const maxY = window.innerHeight - floatingNav.offsetHeight;
-                if (rect.right > window.innerWidth) {
-                    floatingNav.style.left = Math.min(parseInt(floatingNav.style.left || 0), maxX) + 'px';
-                }
-                if (rect.bottom > window.innerHeight) {
-                    floatingNav.style.top = Math.min(parseInt(floatingNav.style.top || 0), maxY) + 'px';
-                }
+            // 初始還原 (在 DOM 準備好後立即執行)
+            restoreFloatingNavPosition();
+
+            // 在頁面完全載入後再驗證一次 (防止 layout 變化)
+            window.addEventListener('load', function() {
+                // 延遲一點確保所有元素都已渲染
+                setTimeout(function() {
+                    restoreFloatingNavPosition();
+                }, 50);
             });
 
-            // ----- 13. 初始化 -----
+            // 窗口大小變化時重新校準
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    const rect = floatingNav.getBoundingClientRect();
+                    const maxX = window.innerWidth - floatingNav.offsetWidth - 20;
+                    const maxY = window.innerHeight - floatingNav.offsetHeight - 20;
+                    const minX = 10;
+                    const minY = 10;
+                    // 如果當前位置超出邊界，重置到默認位置
+                    if (rect.left < minX || rect.top < minY || rect.right > window.innerWidth - 10 || rect.bottom > window
+                        .innerHeight - 10) {
+                        restoreFloatingNavPosition();
+                    }
+                }, 200);
+            });
+
+            // ----- 14. 初始化幻燈片狀態 -----
             currentSlide = 0;
             track.classList.remove('shift');
             dot0.classList.add('active');
@@ -928,6 +1158,8 @@
 
             console.log('✅ 行動版已載入 | 題號:', q, ' 圖層數:', question_no);
             console.log('💡 左右滑動圖片區域即可切換 e0.gif 與 0.gif');
+            console.log('🔧 浮動導航位置已校準');
+
         });
     </script>
 </body>
