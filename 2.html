@@ -1,15 +1,19 @@
-<html lang="zh-CN"><head>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>5. 沖床機自動計數直流煞車</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>油壓乙級 行動版</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
-        
+
         body {
             background: linear-gradient(45deg, #1a2a6c, #b21f1f, #fdbbfd);
             color: white;
@@ -19,19 +23,19 @@
             flex-direction: column;
             overflow: hidden;
         }
-        
+
+        /* ===== 頂部導航 ===== */
         .home-nav {
             position: fixed;
-            top: 0px;
-            left: 0px;
+            top: 8px;
+            left: 8px;
             display: flex;
             gap: 5px;
-            z-index: 1000;
+            z-index: 1100;
         }
-
         .home-button {
-            width: 45px;
-            height: 45px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             background: rgba(0, 0, 0, 0.5);
             border: 2px solid rgba(255, 255, 255, 0.5);
@@ -43,27 +47,25 @@
             font-weight: bold;
             text-decoration: none;
             transition: all 0.3s ease;
-            opacity: 0.5;
+            opacity: 0.6;
         }
-
         .home-button:hover {
             opacity: 1;
             background: rgba(0, 0, 0, 0.7);
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
-        
+
         .question-nav {
             position: fixed;
-            top: 0px;
-            right: 0px;
+            top: 8px;
+            right: 8px;
             display: flex;
             gap: 5px;
-            z-index: 1000;
+            z-index: 1100;
         }
-        
         .nav-button {
-            width: 45px;
-            height: 45px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             background: rgba(0, 0, 0, 0.5);
             border: 2px solid rgba(255, 255, 255, 0.5);
@@ -75,495 +77,362 @@
             font-weight: bold;
             text-decoration: none;
             transition: all 0.3s ease;
-            opacity: 0.5;
+            opacity: 0.6;
         }
-        
         .nav-button:hover {
             opacity: 1;
             background: rgba(0, 0, 0, 0.7);
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
-        
         .question-indicator {
             position: fixed;
-            top: 6px;
-            right: 100px;
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid rgba(255, 255, 255, 0.5);
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.55);
+            border: 2px solid rgba(255, 255, 255, 0.4);
             color: white;
-            padding: 4px 8px;
+            padding: 4px 16px;
             border-radius: 20px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: bold;
-            z-index: 1000;
-            opacity: 0.5;
-            transition: opacity 0.3s ease;
+            z-index: 1100;
+            white-space: nowrap;
+            backdrop-filter: blur(4px);
+            letter-spacing: 0.5px;
         }
-        
-        .question-indicator:hover {
-            opacity: 1;
-        }
-        
+
+        /* ===== 主容器 ===== */
         .container {
             width: 100%;
-            margin: 0 auto;
-            padding: 3px 0;
-            flex: 1;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            height: 100vh;
             overflow: hidden;
+            padding: 0;
         }
-        
+
         .content {
             display: flex;
             flex-direction: column;
-            gap: 3px;
             flex: 1;
             width: 100%;
-            min-height: 0;
             height: 100%;
             overflow: hidden;
+            position: relative;
         }
-        
+
+        /* ===== 圖片區域（水平滑動輪播） ===== */
         .images-container {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            margin-bottom: 0px;
-            width: 100%;
-            background: #2c3e50;
-            transition: background 0.3s ease;
+            position: relative;
             flex: 1 1 auto;
             min-height: 0;
-            height: 100%;
-        }
-        
-        .image-container:hover {
-            background: #34495e;
-        }
-        
-        .images-container.portrait {
-            flex-direction: column;
-        }
-        
-        .images-container.landscape {
-            flex-direction: row;
-            height: 100%;
-        }
-        
-        .image-container {
-            position: relative;
-            border: 0px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
+            width: 100%;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            background: #2c3e50;
+            background: #1a2632;
+            touch-action: pan-y;
+        }
+
+        .slide-track {
+            display: flex;
+            width: 200%;
+            height: 100%;
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: transform;
+        }
+        .slide-track.shift {
+            transform: translateX(-50%);
+        }
+
+        .slide-item {
+            width: 50%;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            flex: 1 1 50%;
-            min-height: 0;
-            max-height: calc(100vh - 160px);
+            background: #1a2632;
+            position: relative;
+            flex-shrink: 0;
         }
-        
-        .images-container.portrait .image-container {
-            width: 100%;
-            flex: 1 1 auto;
-            max-height: calc((100vh - 160px) / 2);
-        }
-        
-        .images-container.landscape .image-container {
-            width: 50%;
-            height: 100%;
-            flex: 1 1 50%;
-            max-height: calc(100vh - 160px);
-        }
-        
-        .base-image, .layer {
-            transition: opacity 0.3s ease;
-            display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-						z-index: 0;
-        }
-        
-        .base-image {
-            z-index: 0;
-        }
-        
-        .layer {
+
+        .slide-item .base-image,
+        .slide-item .layer {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            opacity: 0;
-            z-index: 2;
-            width: 100%;
-            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
             object-fit: contain;
+            display: block;
         }
-        
-        .controls {
-            background: rgba(30, 30, 40, 0.45);
-            backdrop-filter: blur(8px);
-            padding: 12px 15px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.8);
-            width: calc(100% - 40px);
-            max-width: 1600px;
-            margin: 0px auto 5px;
-            transition: all 0.3s ease;
+        .slide-item .base-image {
+            z-index: 0;
+        }
+        .slide-item .layer {
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        /* ===== 頁碼指示器 ===== */
+        .view-indicator {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            padding: 6px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .view-indicator .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+            transition: background 0.3s ease;
+        }
+        .view-indicator .dot.active {
+            background: #58a6ff;
+            box-shadow: 0 0 10px rgba(88, 166, 255, 0.5);
+        }
+        .view-indicator .page-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== 底部控制欄 ===== */
+        .controls {
+            background: rgba(20, 22, 30, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 10px 12px 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
             flex-shrink: 0;
+            width: 100%;
+            z-index: 10;
         }
-        
-        .controls:hover {
-            background: rgba(40, 40, 50, 0.8);
-        }
-        
+
         .main-controls {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
+            gap: 6px;
         }
-        
+
         .buttons-row {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
+            flex: 1 1 auto;
+            min-width: 0;
+            max-width: 100%;
         }
-        
+
         .toggle-btn {
-            padding: 8px 16px;
+            padding: 6px 14px;
             border-radius: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.08);
             color: white;
-            font-size: 0.9rem;
-            font-weight: bold;
+            font-size: 0.8rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             white-space: nowrap;
             flex-shrink: 0;
+            touch-action: manipulation;
         }
-        
         .toggle-btn:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.18);
         }
-        
         .toggle-btn.active {
-            background: rgba(76, 175, 80, 0.6);
-            box-shadow: 0 0 10px rgba(76, 175, 80, 0.6);
+            background: rgba(76, 175, 80, 0.5);
+            border-color: rgba(76, 175, 80, 0.6);
+            box-shadow: 0 0 12px rgba(76, 175, 80, 0.25);
         }
-        
+
         .nav-btn {
-            width: 35px;
-            height: 35px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.08);
             color: white;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            touch-action: manipulation;
         }
-        
         .nav-btn:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.18);
         }
-        
         .nav-btn:disabled {
-            opacity: 0.5;
+            opacity: 0.35;
             cursor: not-allowed;
-            transform: none;
         }
-        
+
         .number-btn {
-            min-width: 35px;
-            height: 35px;
-            padding: 0 6px;
-            border-radius: 18px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            font-size: 0.9rem;
-            font-weight: bold;
+            min-width: 32px;
+            height: 32px;
+            padding: 0 5px;
+            border-radius: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.75rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            touch-action: manipulation;
         }
-        
         .number-btn:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.15);
         }
-        
         .number-btn.active {
             background: rgba(255, 255, 255, 0.9);
-            color: #2c3e50;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            color: #1a2632;
+            border-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
         }
-        
+
         .key-hint {
             text-align: center;
-            margin-top: 5px;
-            font-size: 0.9rem;
-            opacity: 0.8;
+            margin-top: 4px;
+            font-size: 0.7rem;
+            opacity: 0.5;
+            letter-spacing: 0.3px;
         }
-        
+
+        /* ===== 浮動導航 ===== */
         .floating-nav {
             position: fixed;
             display: flex;
-            gap: 10px;
-            z-index: 999;
-            top: 100px;
-            right: 20px;
+            gap: 6px;
+            z-index: 1000;
+            top: 80px;
+            right: 12px;
+            touch-action: none;
             user-select: none;
         }
-        
         .floating-nav-btn {
-            width: 45px;
-            height: 45px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.6);
-            background: rgba(40, 40, 50, 0.5);
-            backdrop-filter: blur(5px);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            background: rgba(30, 32, 40, 0.65);
+            backdrop-filter: blur(8px);
             color: white;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: bold;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
             transition: all 0.2s ease;
-            opacity: 0.5;
+            opacity: 0.6;
+            touch-action: manipulation;
         }
-        
         .floating-nav-btn:hover {
-            background: rgba(60, 60, 70, 0.7);
-            transform: scale(1.1);
-            opacity: 0.8;
+            opacity: 0.9;
+            transform: scale(1.05);
         }
-        
-        .floating-toggle-btn {
+        .floating-nav-btn.floating-toggle-btn {
             width: auto;
-            min-width: 45px;
-            padding: 0 12px;
-            border-radius: 22.5px;
-            font-size: 0.9rem;
+            min-width: 42px;
+            padding: 0 14px;
+            border-radius: 21px;
+            font-size: 0.8rem;
             white-space: nowrap;
         }
-        
-        .floating-toggle-btn.active {
-            background: rgba(76, 175, 80, 0.6);
-            box-shadow: 0 0 10px rgba(76, 175, 80, 0.6);
-        }
-        
-        .floating-nav.dragging {
-            cursor: grabbing;
-        }
-        
-        .floating-nav.dragging .floating-nav-btn {
-            pointer-events: none;
+        .floating-nav-btn.floating-toggle-btn.active {
+            background: rgba(76, 175, 80, 0.5);
+            border-color: rgba(76, 175, 80, 0.6);
+            box-shadow: 0 0 14px rgba(76, 175, 80, 0.3);
         }
 
-        @media (max-width: 992px) {
-            .main-controls {
-                gap: 8px;
-            }
-            
-            .toggle-btn {
-                padding: 7px 14px;
-                font-size: 0.85rem;
-            }
-            
-            .nav-btn, .number-btn {
-                width: 32px;
-                height: 32px;
-                font-size: 1rem;
-            }
-            
-            .floating-nav-btn {
-                width: 40px;
-                height: 40px;
-                font-size: 1.2rem;
-            }
-            
-            .floating-toggle-btn {
-                min-width: 40px;
-                padding: 0 10px;
-                font-size: 0.85rem;
-            }
-        }
-        
+        /* ===== 響應式 ===== */
         @media (max-width: 768px) {
-            .container {
-                padding: 15px 0;
-            }
-            
-            .controls {
-                padding: 12px;
-                width: calc(100% - 30px);
-            }
-            
-            .main-controls {
-                gap: 6px;
-            }
-            
-            .toggle-btn {
-                padding: 6px 12px;
-                font-size: 0.8rem;
-            }
-            
-            .nav-btn, .number-btn {
-                width: 30px;
-                height: 30px;
-                font-size: 0.9rem;
-            }
-            
-            .floating-nav {
-                top: 80px;
-                right: 15px;
-            }
-            
-            .floating-nav-btn {
-                width: 38px;
-                height: 38px;
-                font-size: 1.1rem;
-            }
-            
-            .floating-toggle-btn {
-                min-width: 38px;
-                padding: 0 9px;
-                font-size: 0.8rem;
-            }
-            
-            .home-button {
-                width: 40px;
-                height: 40px;
-                font-size: 1.1rem;
-            }
+            .question-indicator { font-size: 0.8rem; padding: 3px 12px; top: 10px; }
+            .home-button, .nav-button { width: 36px; height: 36px; font-size: 1rem; }
+            .controls { padding: 8px 10px 10px; }
+            .toggle-btn { padding: 5px 10px; font-size: 0.7rem; }
+            .nav-btn { width: 30px; height: 30px; font-size: 0.9rem; }
+            .number-btn { min-width: 28px; height: 28px; font-size: 0.7rem; padding: 0 4px; }
+            .floating-nav { top: 70px; right: 8px; gap: 4px; }
+            .floating-nav-btn { width: 36px; height: 36px; font-size: 1rem; }
+            .floating-nav-btn.floating-toggle-btn { min-width: 36px; padding: 0 10px; font-size: 0.7rem; }
+            .view-indicator { padding: 4px 14px; bottom: 12px; gap: 10px; }
+            .view-indicator .dot { width: 6px; height: 6px; }
+            .view-indicator .page-label { font-size: 0.7rem; }
+            .key-hint { font-size: 0.6rem; }
         }
-        
-        @media (max-width: 600px) {
-            .controls {
-                padding: 10px;
-                width: calc(100% - 20px);
-            }
-            
-            .main-controls {
-                gap: 5px;
-            }
-            
-            .toggle-btn {
-                padding: 5px 10px;
-                font-size: 0.75rem;
-            }
-            
-            .nav-btn, .number-btn {
-                width: 28px;
-                height: 28px;
-                font-size: 0.85rem;
-            }
-            
-            .key-hint {
-                font-size: 0.8rem;
-            }
-            
-            .floating-nav {
-                top: 65px;
-                right: 8px;
-                gap: 4px;
-            }
-            
-            .floating-nav-btn {
-                width: 35px;
-                height: 35px;
-                font-size: 0.9rem;
-            }
-            
-            .floating-toggle-btn {
-                min-width: 35px;
-                padding: 0 8px;
-                font-size: 0.75rem;
-                border-radius: 17.5px;
-            }
-            
-            .home-button {
-                width: 38px;
-                height: 38px;
-                font-size: 1rem;
-            }
-        }
-        
         @media (max-width: 480px) {
-            .controls {
-                padding: 8px;
-            }
-            
-            .main-controls {
-                gap: 4px;
-            }
-            
-            .toggle-btn {
-                padding: 4px 8px;
-                font-size: 0.7rem;
-            }
-            
-            .nav-btn, .number-btn {
-                width: 26px;
-                height: 26px;
-                font-size: 0.8rem;
-            }
-            
-            .floating-nav {
-                top: 60px;
-                right: 8px;
-            }
-            
-            .floating-nav-btn {
-                width: 32px;
-                height: 32px;
-                font-size: 0.9rem;
-            }
-            
-            .floating-toggle-btn {
-                min-width: 32px;
-                padding: 0 7px;
-                font-size: 0.7rem;
-                border-radius: 16px;
-            }
-            
-            .home-button {
-                width: 35px;
-                height: 35px;
-                font-size: 0.9rem;
-            }
+            .question-indicator { font-size: 0.7rem; padding: 2px 10px; top: 8px; }
+            .home-button, .nav-button { width: 32px; height: 32px; font-size: 0.85rem; }
+            .controls { padding: 6px 6px 8px; }
+            .toggle-btn { padding: 4px 8px; font-size: 0.65rem; }
+            .nav-btn { width: 26px; height: 26px; font-size: 0.8rem; }
+            .number-btn { min-width: 24px; height: 24px; font-size: 0.6rem; padding: 0 3px; border-radius: 12px; }
+            .floating-nav { top: 58px; right: 6px; gap: 3px; }
+            .floating-nav-btn { width: 32px; height: 32px; font-size: 0.85rem; }
+            .floating-nav-btn.floating-toggle-btn { min-width: 32px; padding: 0 8px; font-size: 0.6rem; }
+            .view-indicator { padding: 3px 12px; bottom: 10px; gap: 8px; }
+            .view-indicator .dot { width: 5px; height: 5px; }
+            .view-indicator .page-label { font-size: 0.65rem; }
+            .key-hint { font-size: 0.55rem; margin-top: 2px; }
+            .buttons-row { gap: 3px; }
+            .main-controls { gap: 4px; }
+        }
+        @media (orientation: landscape) and (max-height: 500px) {
+            .controls { padding: 4px 8px 6px; }
+            .toggle-btn { padding: 3px 8px; font-size: 0.6rem; }
+            .nav-btn { width: 24px; height: 24px; font-size: 0.7rem; }
+            .number-btn { min-width: 22px; height: 22px; font-size: 0.55rem; padding: 0 3px; }
+            .key-hint { display: none; }
+            .view-indicator { bottom: 6px; padding: 2px 10px; gap: 6px; }
+            .view-indicator .page-label { font-size: 0.6rem; }
+            .floating-nav { top: 50px; right: 6px; gap: 3px; }
+            .floating-nav-btn { width: 28px; height: 28px; font-size: 0.75rem; }
+            .floating-nav-btn.floating-toggle-btn { min-width: 28px; padding: 0 6px; font-size: 0.55rem; }
+            .question-indicator { font-size: 0.6rem; padding: 2px 8px; top: 6px; }
+            .home-button, .nav-button { width: 28px; height: 28px; font-size: 0.75rem; }
         }
     </style>
 </head>
 <body>
+
+    <!-- ===== 固定頂部 ===== -->
     <div class="home-nav">
-        <a href="https://yeha49.github.io/115" class="home-button">
-            <svg width="20" height="18" viewBox="0 0 20 18" fill="none" stroke="white" stroke-width="2">
+        <a href="https://yeha49.github.io/115" class="home-button" aria-label="首頁">
+            <svg width="18" height="16" viewBox="0 0 20 18" fill="none" stroke="white" stroke-width="2">
                 <path d="M1 9 L10 1 L19 9 M5 17 L5 9 M15 17 L15 9 M1 17 L19 17"></path>
             </svg>
         </a>
@@ -571,193 +440,132 @@
     <div class="question-indicator" id="question-indicator">
         第 <span id="current-question">5</span> 題 / 共 <span id="total-questions">8</span> 題
     </div>
-    
     <div class="question-nav">
         <a href="2.html?q=2-4" id="prev-question" class="nav-button">←</a>
         <a href="2.html?q=2-6" id="next-question" class="nav-button">→</a>
     </div>
 
+    <!-- ===== 主內容 ===== -->
     <div class="container">
         <div class="content">
-            <!-- ===== 修复重点：删掉所有硬编码的 img，只留空容器 ===== -->
-            <div class="images-container landscape" id="images-container">
-                <div class="image-container" id="bottom-container">
-                    <!-- 底图和图层都由 JavaScript 动态生成 -->
+
+            <!-- 圖片區域：水平滑動 -->
+            <div class="images-container" id="images-container">
+                <div class="slide-track" id="slide-track">
+                    <!-- 第一張：e0.gif -->
+                    <div class="slide-item" id="slide-0"></div>
+                    <!-- 第二張：0.gif -->
+                    <div class="slide-item" id="slide-1"></div>
                 </div>
-                
-                <div class="image-container" id="top-container">
-                    <!-- 底图和图层都由 JavaScript 动态生成 -->
+
+                <!-- 頁碼指示器 -->
+                <div class="view-indicator" id="view-indicator">
+                    <span class="dot active" id="dot0"></span>
+                    <span class="dot" id="dot1"></span>
+                    <span class="page-label" id="view-label">1 / 2  e0 圖</span>
                 </div>
             </div>
 
+            <!-- ===== 底部控制欄 ===== -->
             <div class="controls">
                 <div class="main-controls">
                     <button class="toggle-btn" id="toggle-all">全部顯示</button>
                     <button class="nav-btn" id="prev-layer">←</button>
                     <button class="nav-btn" id="next-layer">→</button>
-                    
                     <div class="buttons-row" id="buttons-row">
-                        <!-- 数字按钮将通过JavaScript动态添加 -->
+                        <!-- 圖層數字按鈕由 JS 動態生成 -->
                     </div>
                 </div>
-                
-                <div class="key-hint">使用左右方向鍵切換圖層，空白鍵顯示/隱藏所有圖層</div>
+                <div class="key-hint">← → 切換圖層 ｜ 空格 顯示/隱藏 ｜ 左右滑動切換 e0 / 0 圖</div>
             </div>
         </div>
     </div>
 
-    <div class="floating-nav" id="floating-nav" style="left: 760.969px; top: 387.859px; right: auto;">
+    <!-- ===== 浮動導航 ===== -->
+    <div class="floating-nav" id="floating-nav">
         <div class="floating-nav-btn floating-toggle-btn" id="floating-toggle">全部顯示</div>
         <div class="floating-nav-btn" id="floating-prev">←</div>
         <div class="floating-nav-btn" id="floating-next">→</div>
     </div>
 
+    <!-- ===== JavaScript ===== -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const buttonsRow = document.getElementById('buttons-row');
-            const topContainer = document.getElementById('top-container');
-            const bottomContainer = document.getElementById('bottom-container');
-            const imagesContainer = document.getElementById('images-container');
-            const toggleAllBtn = document.getElementById('toggle-all');
-            const prevLayerBtn = document.getElementById('prev-layer');
-            const nextLayerBtn = document.getElementById('next-layer');
-            const content = document.querySelector('.content');
-            
-            const floatingNav = document.getElementById('floating-nav');
-            const floatingToggle = document.getElementById('floating-toggle');
-            const floatingPrev = document.getElementById('floating-prev');
-            const floatingNext = document.getElementById('floating-next');
-            
-            const prevQuestionBtn = document.getElementById('prev-question');
-            const nextQuestionBtn = document.getElementById('next-question');
-            
-            const questionIndicator = document.getElementById('question-indicator');
-            const currentQuestionSpan = document.getElementById('current-question');
-            const totalQuestionsSpan = document.getElementById('total-questions');
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            const q = urlParams.get('q');
-            
+
+            // ----- 1. 題目數據 -----
             const pathTitleList = [
                 ['2-1', '1. 電動機正反轉兼Y-Δ啟動', '15'],
                 ['2-2', '2. 電動機正反轉兼Y-Δ啟動附瞬時停電保護', '21'],
                 ['2-3', '3. 兩台抽水泵手動、自動交替', '17'],
                 ['2-4', '4. 污排水泵手動、自動交互兼異常水位並列運轉', '20'],
-                ['2-5', '5. 沖床機自動計數直流煞車', '19'],
-                ['2-6', '6. 大門控制', '22'],
+                ['2-5', '5. 差動、調壓、調速迴路設計、裝配、運轉及調整', '19'],
+                ['2-6', '6. 蓄壓、鎖固、降壓迴路設計、裝配運轉及調整', '18'],
                 ['2-7', '7. 常用電源與備用電源自動切換', '16'],
                 ['2-8', '8. 三相三線負載之瓦時、乏時、功因、電壓、電流監視盤', '11']
             ];
-            
-            let matchedTitle = '默認標題';
-            let question_no = '0';
-            let currentQuestionIndex = -1;
-            
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const q = urlParams.get('q') || '2-5';
+
+            let matchedTitle = '5. 沖床機自動計數直流煞車';
+            let question_no = 19;
+            let currentQuestionIndex = 4;
+
             for (let i = 0; i < pathTitleList.length; i++) {
                 const [pathKey, title, stack] = pathTitleList[i];
                 if (q == pathKey) {
                     matchedTitle = title;
-                    question_no = stack;
+                    question_no = parseInt(stack, 10);
                     currentQuestionIndex = i;
                     break;
                 }
             }
-            
-            if (currentQuestionIndex >= 0) {
-                currentQuestionSpan.textContent = currentQuestionIndex + 1;
-            }
-            totalQuestionsSpan.textContent = pathTitleList.length;
-            
-            if (currentQuestionIndex >= 0) {
-                const prevIndex = currentQuestionIndex === 0 ? pathTitleList.length - 1 : currentQuestionIndex - 1;
-                const prevQuestion = pathTitleList[prevIndex][0];
-                prevQuestionBtn.href = `2.html?q=${prevQuestion}`;
-                
-                const nextIndex = currentQuestionIndex === pathTitleList.length - 1 ? 0 : currentQuestionIndex + 1;
-                const nextQuestion = pathTitleList[nextIndex][0];
-                nextQuestionBtn.href = `2.html?q=${nextQuestion}`;
-            }
-            
+
             document.title = matchedTitle;
-            
-            const topLayers_m = [
-                { id: 'top-layer0', name: '上图图层 1', image: 'e1.gif' },
-                { id: 'top-layer1', name: '上图图层 2', image: 'e2.gif' },
-                { id: 'top-layer2', name: '上图图层 3', image: 'e3.gif' },
-                { id: 'top-layer3', name: '上图图层 4', image: 'e4.gif' },
-                { id: 'top-layer4', name: '上图图层 5', image: 'e5.gif' },
-                { id: 'top-layer5', name: '上图图层 6', image: 'e6.gif' },
-                { id: 'top-layer6', name: '上图图层 7', image: 'e7.gif' },
-                { id: 'top-layer7', name: '上图图层 8', image: 'e8.gif' },
-                { id: 'top-layer8', name: '上图图层 9', image: 'e9.gif' },
-                { id: 'top-layer9', name: '上图图层 10', image: 'e10.gif' },
-                { id: 'top-layer10', name: '上图图层 11', image: 'e11.gif' },
-                { id: 'top-layer11', name: '上图图层 12', image: 'e12.gif' },
-                { id: 'top-layer12', name: '上图图层 13', image: 'e13.gif' },
-                { id: 'top-layer13', name: '上图图层 14', image: 'e14.gif' },
-                { id: 'top-layer14', name: '上图图层 15', image: 'e15.gif' },
-                { id: 'top-layer15', name: '上图图层 16', image: 'e16.gif' },
-                { id: 'top-layer16', name: '上图图层 17', image: 'e17.gif' },
-                { id: 'top-layer17', name: '上图图层 18', image: 'e18.gif' },
-                { id: 'top-layer18', name: '上图图层 19', image: 'e19.gif' },
-                { id: 'top-layer19', name: '上图图层 20', image: 'e20.gif' },
-                { id: 'top-layer20', name: '上图图层 21', image: 'e21.gif' },
-                { id: 'top-layer21', name: '上图图层 22', image: 'e22.gif' }
-            ];
-            
-            const bottomLayers_m = [
-                { id: 'bottom-layer0', name: '下图图层 1', image: '1.gif' },
-                { id: 'bottom-layer1', name: '下图图层 2', image: '2.gif' },
-                { id: 'bottom-layer2', name: '下图图层 3', image: '3.gif' },
-                { id: 'bottom-layer3', name: '下图图层 4', image: '4.gif' },
-                { id: 'bottom-layer4', name: '下图图层 5', image: '5.gif' },
-                { id: 'bottom-layer5', name: '下图图层 6', image: '6.gif' },
-                { id: 'bottom-layer6', name: '下图图层 7', image: '7.gif' },
-                { id: 'bottom-layer7', name: '下图图层 8', image: '8.gif' },
-                { id: 'bottom-layer8', name: '下图图层 9', image: '9.gif' },
-                { id: 'bottom-layer9', name: '下图图层 10', image: '10.gif' },
-                { id: 'bottom-layer10', name: '下图图层 11', image: '11.gif' },
-                { id: 'bottom-layer11', name: '下图图层 12', image: '12.gif' },
-                { id: 'bottom-layer12', name: '下图图层 13', image: '13.gif' },
-                { id: 'bottom-layer13', name: '下图图层 14', image: '14.gif' },
-                { id: 'bottom-layer14', name: '下图图层 15', image: '15.gif' },
-                { id: 'bottom-layer15', name: '下图图层 16', image: '16.gif' },
-                { id: 'bottom-layer16', name: '下图图层 17', image: '17.gif' },
-                { id: 'bottom-layer17', name: '下图图层 18', image: '18.gif' },
-                { id: 'bottom-layer18', name: '下图图层 19', image: '19.gif' },
-                { id: 'bottom-layer19', name: '下图图层 20', image: '20.gif' },
-                { id: 'bottom-layer20', name: '下图图层 21', image: '21.gif' },
-                { id: 'bottom-layer21', name: '下图图层 22', image: '22.gif' }
-            ];
-            
-            const topLayers = topLayers_m.slice(0, question_no);
-            const bottomLayers = bottomLayers_m.slice(0, question_no);
-            
-            // 动态生成底图（只生成一次，不会重复）
-            let baseBottomImg = document.createElement('img');
-            baseBottomImg.className = 'base-image';
-            baseBottomImg.src = q + '/' + 'e0.gif';
-            baseBottomImg.alt = '下图';
-            baseBottomImg.addEventListener('load', adjustContentHeight);
-            baseBottomImg.addEventListener('error', adjustContentHeight);
-            bottomContainer.appendChild(baseBottomImg);
-            
-            let baseTopImg = document.createElement('img');
-            baseTopImg.className = 'base-image';
-            baseTopImg.src = q + '/' + '0.gif';
-            baseTopImg.alt = '上图';
-            baseTopImg.addEventListener('load', adjustContentHeight);
-            baseTopImg.addEventListener('error', adjustContentHeight);
-            topContainer.appendChild(baseTopImg);
-        
+            document.getElementById('current-question').textContent = currentQuestionIndex + 1;
+            document.getElementById('total-questions').textContent = pathTitleList.length;
+
+            if (currentQuestionIndex >= 0) {
+                const prevIdx = currentQuestionIndex === 0 ? pathTitleList.length - 1 : currentQuestionIndex - 1;
+                const nextIdx = currentQuestionIndex === pathTitleList.length - 1 ? 0 : currentQuestionIndex + 1;
+                document.getElementById('prev-question').href = `2.html?q=${pathTitleList[prevIdx][0]}`;
+                document.getElementById('next-question').href = `2.html?q=${pathTitleList[nextIdx][0]}`;
+            }
+
+            // ----- 2. 圖層數據 -----
+            const layers0 = []; // e1.gif ~ eN.gif
+            const layers1 = []; // 1.gif ~ N.gif
+            for (let i = 1; i <= question_no; i++) {
+                layers0.push({ id: 's0-l' + i, image: 'e' + i + '.gif' });
+                layers1.push({ id: 's1-l' + i, image: i + '.gif' });
+            }
+
+            // ----- 3. DOM 引用 -----
+            const slide0 = document.getElementById('slide-0');
+            const slide1 = document.getElementById('slide-1');
+            const track = document.getElementById('slide-track');
+            const buttonsRow = document.getElementById('buttons-row');
+            const toggleAllBtn = document.getElementById('toggle-all');
+            const prevLayerBtn = document.getElementById('prev-layer');
+            const nextLayerBtn = document.getElementById('next-layer');
+            const floatingNav = document.getElementById('floating-nav');
+            const floatingToggle = document.getElementById('floating-toggle');
+            const floatingPrev = document.getElementById('floating-prev');
+            const floatingNext = document.getElementById('floating-next');
+            const dot0 = document.getElementById('dot0');
+            const dot1 = document.getElementById('dot1');
+            const viewLabel = document.getElementById('view-label');
+
+            // ----- 4. 狀態 -----
+            let currentSlide = 0; // 0 = e0, 1 = 0
             let currentLayerIndex = -1;
             let allVisible = false;
-            
             let blinkInterval = null;
             let isBlinking = false;
             let blinkState = false;
             const BLINK_INTERVAL = 600;
-            
+
+            // 拖動
             let isDragging = false;
             let isPotentialDrag = false;
             let dragOffsetX, dragOffsetY;
@@ -765,411 +573,362 @@
             let dragTimeout;
             const DRAG_THRESHOLD = 5;
             const DRAG_DELAY = 200;
-            
-            function adjustContentHeight() {
-                // 保留空函数以防报错，实际高度由 CSS 控制
+
+            // 滑動
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchMoved = false;
+            const SWIPE_THRESHOLD = 30;
+
+            // ----- 5. 構建幻燈片內容 -----
+            function buildSlide(container, slideIndex) {
+                container.innerHTML = '';
+                const isFirst = (slideIndex === 0);
+                const baseSrc = isFirst ? (q + '/e0.gif') : (q + '/0.gif');
+                const layers = isFirst ? layers0 : layers1;
+
+                const baseImg = document.createElement('img');
+                baseImg.className = 'base-image';
+                baseImg.src = baseSrc;
+                baseImg.alt = isFirst ? 'e0圖' : '0圖';
+                baseImg.draggable = false;
+                container.appendChild(baseImg);
+
+                layers.forEach((layer) => {
+                    const img = document.createElement('img');
+                    img.id = layer.id + '-el';
+                    img.className = 'layer';
+                    img.src = q + '/' + layer.image;
+                    img.alt = layer.id;
+                    img.draggable = false;
+                    img.style.opacity = '0';
+                    container.appendChild(img);
+                });
             }
-            
-            function updateLayout() {
-                const isLandscape = window.innerWidth > window.innerHeight;
-                
-                if (isLandscape) {
-                    imagesContainer.classList.remove('portrait');
-                    imagesContainer.classList.add('landscape');
+
+            buildSlide(slide0, 0);
+            buildSlide(slide1, 1);
+
+            // ----- 6. 圖層輔助函數 -----
+            function getLayerElements(slideIndex, layerIndex) {
+                const layers = slideIndex === 0 ? layers0 : layers1;
+                if (layerIndex < 0 || layerIndex >= layers.length) return null;
+                return document.getElementById(layers[layerIndex].id + '-el');
+            }
+
+            function getAllLayerElements(slideIndex) {
+                const layers = slideIndex === 0 ? layers0 : layers1;
+                const els = [];
+                layers.forEach(l => {
+                    const el = document.getElementById(l.id + '-el');
+                    if (el) els.push(el);
+                });
+                return els;
+            }
+
+            function updateLayerVisibility(slideIndex, layerIndex, visible) {
+                const el = getLayerElements(slideIndex, layerIndex);
+                if (el) el.style.opacity = visible ? '1' : '0';
+            }
+
+            function updateAllLayersVisibility(slideIndex, visible, opacityVal) {
+                const els = getAllLayerElements(slideIndex);
+                els.forEach(el => el.style.opacity = visible ? (opacityVal || '1') : '0');
+            }
+
+            function hideAllLayers(slideIndex) { updateAllLayersVisibility(slideIndex, false); }
+            function showAllLayers(slideIndex, opacityVal) { updateAllLayersVisibility(slideIndex, true, opacityVal || '0.5'); }
+
+            function stopBlinking() {
+                isBlinking = false;
+                if (blinkInterval) { clearInterval(blinkInterval);
+                    blinkInterval = null; }
+                if (!allVisible && currentLayerIndex >= 0) {
+                    const el0 = getLayerElements(0, currentLayerIndex);
+                    const el1 = getLayerElements(1, currentLayerIndex);
+                    if (el0) el0.style.opacity = '1';
+                    if (el1) el1.style.opacity = '1';
+                } else if (allVisible) {
+                    getAllLayerElements(0).forEach(el => el.style.opacity = '0.5');
+                    getAllLayerElements(1).forEach(el => el.style.opacity = '0.5');
+                }
+            }
+
+            function startBlinking(slideIndex, layerIndex) {
+                stopBlinking();
+                if (allVisible) return;
+                const el = getLayerElements(slideIndex, layerIndex);
+                if (!el) return;
+                isBlinking = true;
+                blinkState = true;
+                const other = slideIndex === 0 ? 1 : 0;
+                const otherEl = getLayerElements(other, layerIndex);
+                if (el) el.style.opacity = '1';
+                if (otherEl) otherEl.style.opacity = '1';
+
+                blinkInterval = setInterval(() => {
+                    blinkState = !blinkState;
+                    const v = blinkState ? '1' : '0.3';
+                    const e1 = getLayerElements(slideIndex, layerIndex);
+                    const e2 = getLayerElements(other, layerIndex);
+                    if (e1) e1.style.opacity = v;
+                    if (e2) e2.style.opacity = v;
+                }, BLINK_INTERVAL);
+            }
+
+            // ----- 7. 圖層選擇與全部顯示 -----
+            function selectLayer(layerIndex) {
+                if (allVisible) toggleAllLayers();
+                stopBlinking();
+                hideAllLayers(0);
+                hideAllLayers(1);
+                if (layerIndex >= 0 && layerIndex < layers0.length) {
+                    updateLayerVisibility(0, layerIndex, true);
+                    updateLayerVisibility(1, layerIndex, true);
+                    currentLayerIndex = layerIndex;
+                    startBlinking(currentSlide, layerIndex);
                 } else {
-                    imagesContainer.classList.remove('landscape');
-                    imagesContainer.classList.add('portrait');
+                    currentLayerIndex = -1;
                 }
-                
-                repositionLayers();
-            }
-            
-            function repositionLayers() {
-                document.querySelectorAll('.layer').forEach(layer => {
-                    layer.style.position = 'absolute';
-                    layer.style.top = '50%';
-                    layer.style.left = '50%';
-                    layer.style.transform = 'translate(-50%, -50%)';
+                document.querySelectorAll('.number-btn').forEach((btn, idx) => {
+                    btn.classList.toggle('active', idx === layerIndex);
                 });
             }
-            
-            updateLayout();
-            window.addEventListener('resize', updateLayout);
-            
-            // 动态生成图层（只生成一次，不会重复）
-            topLayers.forEach((layer, index) => {
-                const numberBtn = document.createElement('button');
-                numberBtn.className = 'number-btn';
-                numberBtn.textContent = index + 1;
-                numberBtn.dataset.layerId = layer.id;
-                numberBtn.dataset.index = index;
-                buttonsRow.appendChild(numberBtn);
-                
-                const topLayer = topLayers[index];
-                const topLayerElement = document.createElement('img');
-                topLayerElement.id = `${layer.id}-element`;
-                topLayerElement.className = 'layer';
-                topLayerElement.src = q + '/' + topLayer.image;
-                topLayerElement.alt = layer.name;
-                //topLayerElement.style.zIndex = 999;
-                topLayerElement.addEventListener('load', adjustContentHeight);
-                topLayerElement.addEventListener('error', adjustContentHeight);
-                bottomContainer.appendChild(topLayerElement);
-                
-                const bottomLayer = bottomLayers[index];
-                const bottomLayerElement = document.createElement('img');
-                bottomLayerElement.id = `${bottomLayer.id}-element`;
-                bottomLayerElement.className = 'layer';
-                bottomLayerElement.src = q + '/' + bottomLayer.image;
-                bottomLayerElement.alt = bottomLayer.name;
-                //bottomLayerElement.style.zIndex = 999;
-                bottomLayerElement.addEventListener('load', adjustContentHeight);
-                bottomLayerElement.addEventListener('error', adjustContentHeight);
-                topContainer.appendChild(bottomLayerElement);
-                
-                numberBtn.addEventListener('click', function() {
-                    const isActive = this.classList.contains('active');
-                    
-                    if (isActive) {
-                        this.classList.remove('active');
-                        updateLayerVisibility(layer.id, bottomLayer.id, false);
+
+            function toggleAllLayers() {
+                allVisible = !allVisible;
+                stopBlinking();
+                if (allVisible) {
+                    showAllLayers(0, '0.5');
+                    showAllLayers(1, '0.5');
+                    currentLayerIndex = layers0.length - 1;
+                    document.querySelectorAll('.number-btn').forEach(b => b.classList.add('active'));
+                    toggleAllBtn.textContent = '全部隱藏';
+                    toggleAllBtn.classList.add('active');
+                    floatingToggle.textContent = '全部隱藏';
+                    floatingToggle.classList.add('active');
+                } else {
+                    hideAllLayers(0);
+                    hideAllLayers(1);
+                    currentLayerIndex = -1;
+                    document.querySelectorAll('.number-btn').forEach(b => b.classList.remove('active'));
+                    toggleAllBtn.textContent = '全部顯示';
+                    toggleAllBtn.classList.remove('active');
+                    floatingToggle.textContent = '全部顯示';
+                    floatingToggle.classList.remove('active');
+                }
+            }
+
+            function showNextLayer() {
+                if (allVisible) toggleAllLayers();
+                const total = layers0.length;
+                if (total === 0) return;
+                selectLayer((currentLayerIndex + 1) % total);
+            }
+
+            function showPrevLayer() {
+                if (allVisible) toggleAllLayers();
+                const total = layers0.length;
+                if (total === 0) return;
+                selectLayer((currentLayerIndex - 1 + total) % total);
+            }
+
+            // ----- 8. 幻燈片切換 -----
+            function switchSlide(slideIndex) {
+                if (slideIndex === currentSlide) return;
+                currentSlide = slideIndex;
+                track.classList.toggle('shift', slideIndex === 1);
+
+                dot0.classList.toggle('active', slideIndex === 0);
+                dot1.classList.toggle('active', slideIndex === 1);
+                viewLabel.textContent = (slideIndex + 1) + ' / 2  ' + (slideIndex === 0 ? 'e0 圖' : '0 圖');
+
+                if (currentLayerIndex >= 0 && !allVisible) {
+                    stopBlinking();
+                    updateLayerVisibility(0, currentLayerIndex, true);
+                    updateLayerVisibility(1, currentLayerIndex, true);
+                    startBlinking(slideIndex, currentLayerIndex);
+                } else if (allVisible) {
+                    showAllLayers(0, '0.5');
+                    showAllLayers(1, '0.5');
+                }
+            }
+
+            // ----- 9. 生成數字按鈕 -----
+            for (let i = 0; i < layers0.length; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'number-btn';
+                btn.textContent = i + 1;
+                btn.dataset.index = i;
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const idx = parseInt(this.dataset.index, 10);
+                    if (allVisible) toggleAllLayers();
+                    if (currentLayerIndex === idx) {
                         stopBlinking();
+                        hideAllLayers(0);
+                        hideAllLayers(1);
                         currentLayerIndex = -1;
+                        document.querySelectorAll('.number-btn').forEach(b => b.classList.remove('active'));
                     } else {
-                        document.querySelectorAll('.number-btn').forEach(btn => {
-                            btn.classList.remove('active');
-                        });
-                        
-                        this.classList.add('active');
-                        hideAllLayers();
-                        updateLayerVisibility(layer.id, bottomLayer.id, true);
-                        startBlinking(layer.id, bottomLayer.id);
-                        currentLayerIndex = index;
+                        selectLayer(idx);
                     }
-                    
-                    updateNavButtons();
                 });
+                buttonsRow.appendChild(btn);
+            }
+
+            // ----- 10. 事件綁定 -----
+            toggleAllBtn.addEventListener('click', toggleAllLayers);
+            floatingToggle.addEventListener('click', (e) => { if (!isDragging) toggleAllLayers(); });
+            prevLayerBtn.addEventListener('click', showPrevLayer);
+            nextLayerBtn.addEventListener('click', showNextLayer);
+            floatingPrev.addEventListener('click', (e) => { if (!isDragging) showPrevLayer(); });
+            floatingNext.addEventListener('click', (e) => { if (!isDragging) showNextLayer(); });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') { showNextLayer();
+                    e.preventDefault(); } else if (e.key === 'ArrowLeft') { showPrevLayer();
+                    e.preventDefault(); } else if (e.key === ' ') { toggleAllLayers();
+                    e.preventDefault(); }
             });
-            
-            toggleAllBtn.addEventListener('click', function() {
-                toggleAllLayers();
-            });
-            
-            floatingToggle.addEventListener('click', function(e) {
-                if (!isDragging) {
-                    toggleAllLayers();
+
+            // ----- 11. 左右滑動切換幻燈片 -----
+            const container = document.getElementById('images-container');
+
+            container.addEventListener('touchstart', function(e) {
+                const touch = e.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                touchMoved = false;
+            }, { passive: true });
+
+            container.addEventListener('touchmove', function(e) {
+                if (!touchStartX) return;
+                const touch = e.touches[0];
+                const dx = touch.clientX - touchStartX;
+                const dy = touch.clientY - touchStartY;
+                if (Math.abs(dx) > 10 || Math.abs(dy) > 10) touchMoved = true;
+                if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 15) {
+                    e.preventDefault();
                 }
-            });
-            
-            prevLayerBtn.addEventListener('click', function() {
-                showPrevLayer();
-            });
-            
-            nextLayerBtn.addEventListener('click', function() {
-                showNextLayer();
-            });
-            
-            floatingPrev.addEventListener('click', function(e) {
-                if (!isDragging) {
-                    showPrevLayer();
+            }, { passive: false });
+
+            container.addEventListener('touchend', function(e) {
+                if (!touchStartX || !touchMoved) { touchStartX = 0; return; }
+                const touch = e.changedTouches[0];
+                const dx = touch.clientX - touchStartX;
+                const dy = touch.clientY - touchStartY;
+                if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > SWIPE_THRESHOLD) {
+                    if (dx < 0) {
+                        switchSlide(currentSlide === 0 ? 1 : 0);
+                    } else {
+                        switchSlide(currentSlide === 1 ? 0 : 1);
+                    }
                 }
-            });
-            
-            floatingNext.addEventListener('click', function(e) {
-                if (!isDragging) {
-                    showNextLayer();
-                }
-            });
-            
+                touchStartX = 0;
+                touchMoved = false;
+            }, { passive: true });
+
+            // ----- 12. 浮動導航拖動 -----
             function handleDragStart(e) {
-                e.preventDefault();
-                
                 const clientX = e.clientX || (e.touches && e.touches[0].clientX);
                 const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-                
+                if (clientX == null) return;
                 dragStartX = clientX;
                 dragStartY = clientY;
                 isPotentialDrag = true;
-                
-                dragTimeout = setTimeout(()=> {
-                    if (isPotentialDrag) {
-                        startDragging(clientX, clientY);
-                    }
+                dragTimeout = setTimeout(() => {
+                    if (isPotentialDrag) startDragging(clientX, clientY);
                 }, DRAG_DELAY);
-                
                 document.addEventListener('mousemove', handleDragMove);
                 document.addEventListener('mouseup', handleDragEnd);
                 document.addEventListener('touchmove', handleDragMove, { passive: false });
                 document.addEventListener('touchend', handleDragEnd);
             }
-            
+
             function handleDragMove(e) {
                 if (!isPotentialDrag && !isDragging) return;
-                
                 const clientX = e.clientX || (e.touches && e.touches[0].clientX);
                 const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-                
+                if (clientX == null) return;
                 if (isPotentialDrag && !isDragging) {
-                    const dx = Math.abs(clientX - dragStartX);
-                    const dy = Math.abs(clientY - dragStartY);
-                    
-                    if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+                    if (Math.abs(clientX - dragStartX) > DRAG_THRESHOLD || Math.abs(clientY - dragStartY) > DRAG_THRESHOLD) {
                         startDragging(clientX, clientY);
                     }
                 }
-                
                 if (isDragging) {
                     const x = clientX - dragOffsetX;
                     const y = clientY - dragOffsetY;
-                    
                     const maxX = window.innerWidth - floatingNav.offsetWidth;
                     const maxY = window.innerHeight - floatingNav.offsetHeight;
-                    
                     floatingNav.style.left = Math.min(Math.max(0, x), maxX) + 'px';
                     floatingNav.style.top = Math.min(Math.max(0, y), maxY) + 'px';
                     floatingNav.style.right = 'auto';
-                    
-                    if (e.touches) {
-                        e.preventDefault();
-                    }
+                    if (e.touches) e.preventDefault();
                 }
             }
-            
+
             function handleDragEnd() {
                 clearTimeout(dragTimeout);
-                
                 if (isDragging) {
                     localStorage.setItem('floatingNavPos', JSON.stringify({
                         left: floatingNav.style.left,
                         top: floatingNav.style.top
                     }));
                 }
-                
                 isDragging = false;
                 isPotentialDrag = false;
                 floatingNav.classList.remove('dragging');
-                
                 document.removeEventListener('mousemove', handleDragMove);
                 document.removeEventListener('mouseup', handleDragEnd);
                 document.removeEventListener('touchmove', handleDragMove);
                 document.removeEventListener('touchend', handleDragEnd);
             }
-            
+
             function startDragging(clientX, clientY) {
                 isDragging = true;
                 isPotentialDrag = false;
                 floatingNav.classList.add('dragging');
-                
                 const rect = floatingNav.getBoundingClientRect();
                 dragOffsetX = clientX - rect.left;
                 dragOffsetY = clientY - rect.top;
             }
-            
-            floatingToggle.addEventListener('mousedown', handleDragStart);
-            floatingToggle.addEventListener('touchstart', handleDragStart, { passive: true });
-            
-            floatingPrev.addEventListener('mousedown', handleDragStart);
-            floatingPrev.addEventListener('touchstart', handleDragStart, { passive: true });
-            
-            floatingNext.addEventListener('mousedown', handleDragStart);
-            floatingNext.addEventListener('touchstart', handleDragStart, { passive: true });
-            
+
+            [floatingToggle, floatingPrev, floatingNext].forEach(btn => {
+                btn.addEventListener('mousedown', handleDragStart);
+                btn.addEventListener('touchstart', handleDragStart, { passive: true });
+            });
+
             const savedPos = localStorage.getItem('floatingNavPos');
             if (savedPos) {
-                const pos = JSON.parse(savedPos);
-                floatingNav.style.left = pos.left;
-                floatingNav.style.top = pos.top;
-                floatingNav.style.right = 'auto';
+                try { const pos = JSON.parse(savedPos);
+                    floatingNav.style.left = pos.left;
+                    floatingNav.style.top = pos.top;
+                    floatingNav.style.right = 'auto'; } catch (e) {}
             }
-            
+
             window.addEventListener('resize', function() {
                 const rect = floatingNav.getBoundingClientRect();
                 const maxX = window.innerWidth - floatingNav.offsetWidth;
                 const maxY = window.innerHeight - floatingNav.offsetHeight;
-                
                 if (rect.right > window.innerWidth) {
                     floatingNav.style.left = Math.min(parseInt(floatingNav.style.left || 0), maxX) + 'px';
                 }
-                
                 if (rect.bottom > window.innerHeight) {
                     floatingNav.style.top = Math.min(parseInt(floatingNav.style.top || 0), maxY) + 'px';
                 }
-                
-                updateLayout();
             });
-            
-            document.addEventListener('keydown', function(event) {
-                if (event.key === 'ArrowRight') {
-                    showNextLayer();
-                    event.preventDefault();
-                } else if (event.key === 'ArrowLeft') {
-                    showPrevLayer();
-                    event.preventDefault();
-                } else if (event.key === ' ') {
-                    toggleAllLayers();
-                    event.preventDefault();
-                }
-            });
-            
-            function startBlinking(topLayerId, bottomLayerId) {
-                stopBlinking();
-                isBlinking = true;
-                blinkState = true;
-                
-                const topLayerElement = document.getElementById(`${topLayerId}-element`);
-                const bottomLayerElement = document.getElementById(`${bottomLayerId}-element`);
-                
-                blinkInterval = setInterval(() => {
-                    blinkState = !blinkState;
-                    if (topLayerElement) {
-                        topLayerElement.style.opacity = blinkState ? '1' : '0.3';
-                    }
-                    if (bottomLayerElement) {
-                        bottomLayerElement.style.opacity = blinkState ? '1' : '0.3';
-                    }
-                }, BLINK_INTERVAL);
-            }
-            
-            function stopBlinking() {
-                isBlinking = false;
-                if (blinkInterval) {
-                    clearInterval(blinkInterval);
-                    blinkInterval = null;
-                }
-                
-                //document.querySelectorAll('.layer').forEach(layer => {
-                //    if (layer.style.opacity !== '0') {
-                //        layer.style.opacity = '1';
-                //    }
-                //});
-            }
-            
-            function showNextLayer() {
-                let nextIndex = currentLayerIndex + 1;
-                
-                if (nextIndex >= topLayers.length) {
-                    nextIndex = 0;
-                }
-                
-                const button = document.querySelector(`.number-btn[data-index="${nextIndex}"]`);
-                if (button) {
-                    document.querySelectorAll('.number-btn').forEach(btn => {
-                        btn.classList.remove('active');
-                    });
-                    
-                    button.classList.add('active');
-                    
-                    hideAllLayers();
-                    const topLayer = topLayers[nextIndex];
-                    const bottomLayer = bottomLayers[nextIndex];
-                    updateLayerVisibility(topLayer.id, bottomLayer.id, true);
-                    startBlinking(topLayer.id, bottomLayer.id);
-                    currentLayerIndex = nextIndex;
-                }
-                
-                updateNavButtons();
-            }
-            
-            function showPrevLayer() {
-                let prevIndex = currentLayerIndex - 1;
-                
-                if (prevIndex < 0) {
-                    prevIndex = topLayers.length - 1;
-                }
-                
-                const button = document.querySelector(`.number-btn[data-index="${prevIndex}"]`);
-                if (button) {
-                    document.querySelectorAll('.number-btn').forEach(btn => {
-                        btn.classList.remove('active');
-                    });
-                    
-                    button.classList.add('active');
-                    
-                    hideAllLayers();
-                    const topLayer = topLayers[prevIndex];
-                    const bottomLayer = bottomLayers[prevIndex];
-                    updateLayerVisibility(topLayer.id, bottomLayer.id, true);
-                    startBlinking(topLayer.id, bottomLayer.id);
-                    currentLayerIndex = prevIndex;
-                }
-                
-                updateNavButtons();
-            }
-            
-            function hideAllLayers() {
-                topLayers.forEach((topLayer, index) => {
-                    const bottomLayer = bottomLayers[index];
-                    updateLayerVisibility(topLayer.id, bottomLayer.id, false);
-                });
-                stopBlinking();
-            }
-            
-            function toggleAllLayers() {
-    allVisible = !allVisible;
-    stopBlinking(); // 先停止闪烁，避免残留回调
 
-    if (allVisible) {
-        toggleAllBtn.textContent = '全部隱藏';
-        toggleAllBtn.classList.add('active');
-        floatingToggle.textContent = '全部隱藏';
-        floatingToggle.classList.add('active');
+            // ----- 13. 初始化 -----
+            currentSlide = 0;
+            track.classList.remove('shift');
+            dot0.classList.add('active');
+            dot1.classList.remove('active');
+            viewLabel.textContent = '1 / 2  e0 圖';
 
-        // 显示所有图层，透明度设为 0.5（半透明，下层可见）
-        topLayers.forEach((topLayer, index) => {
-            const bottomLayer = bottomLayers[index];
-            const topEl = document.getElementById(topLayer.id + '-element');
-            const bottomEl = document.getElementById(bottomLayer.id + '-element');
-            if (topEl) topEl.style.opacity = '0.5';
-            if (bottomEl) bottomEl.style.opacity = '0.5';
-        });
-        currentLayerIndex = topLayers.length - 1;
-
-        document.querySelectorAll('.number-btn').forEach(btn => {
-            btn.classList.add('active');
-        });
-    } else {
-        toggleAllBtn.textContent = '全部顯示';
-        toggleAllBtn.classList.remove('active');
-        floatingToggle.textContent = '全部顯示';
-        floatingToggle.classList.remove('active');
-
-        // 隐藏所有图层
-        topLayers.forEach((topLayer, index) => {
-            const bottomLayer = bottomLayers[index];
-            const topEl = document.getElementById(topLayer.id + '-element');
-            const bottomEl = document.getElementById(bottomLayer.id + '-element');
-            if (topEl) topEl.style.opacity = '0';
-            if (bottomEl) bottomEl.style.opacity = '0';
-        });
-        currentLayerIndex = -1;
-
-        document.querySelectorAll('.number-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-    }
-
-    updateNavButtons();
-}
-            
-            function updateLayerVisibility(topLayerId, bottomLayerId, isVisible) {
-                const topLayerElement = document.getElementById(`${topLayerId}-element`);
-                const bottomLayerElement = document.getElementById(`${bottomLayerId}-element`);
-                
-                if (topLayerElement) {
-                    topLayerElement.style.opacity = isVisible ? '1' : '0';
-                }
-                if (bottomLayerElement) {
-                    bottomLayerElement.style.opacity = isVisible ? '1' : '0';
-                }
-            }
-            
-            function updateNavButtons() {
-                nextLayerBtn.disabled = false;
-                prevLayerBtn.disabled = false;
-            }
-            
-            updateNavButtons();
-            setTimeout(adjustContentHeight, 500);
+            console.log('✅ 行動版已載入 | 題號:', q, ' 圖層數:', question_no);
+            console.log('💡 左右滑動圖片區域即可切換 e0.gif 與 0.gif');
         });
     </script>
-</body></html>
+</body>
+</html>
