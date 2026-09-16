@@ -131,6 +131,11 @@
             overflow: hidden;
             background: #1a2632;
             touch-action: pan-y;
+            /* 桌面端滑鼠手勢提示 */
+            cursor: grab;
+        }
+        .images-container:active {
+            cursor: grabbing;
         }
 
         .slide-track {
@@ -167,6 +172,9 @@
             height: auto;
             object-fit: contain;
             display: block;
+            /* 防止拖曳圖片時產生原生拖曳殘影 */
+            -webkit-user-drag: none;
+            user-drag: none;
         }
         .slide-item .base-image {
             z-index: 0;
@@ -330,13 +338,12 @@
             letter-spacing: 0.3px;
         }
 
-        /* ===== 浮動導航 (修復: 確保初始可見 + 防止溢出) ===== */
+        /* ===== 浮動導航 ===== */
         .floating-nav {
             position: fixed;
             display: flex;
             gap: 6px;
             z-index: 1150;
-            /* 提高至所有頂層元素之上，但低於模態層 */;
             top: 80px;
             right: 12px;
             touch-action: none;
@@ -344,7 +351,6 @@
             opacity: 1;
             visibility: visible;
             pointer-events: auto;
-            /* 防止意外被隱藏 */;
             max-width: 90vw;
             flex-wrap: nowrap;
             transition: none;
@@ -388,7 +394,6 @@
             border-color: rgba(76, 175, 80, 0.7);
             box-shadow: 0 0 14px rgba(76, 175, 80, 0.35);
         }
-        /* 拖動中增加回饋 */
         .floating-nav.dragging .floating-nav-btn {
             opacity: 0.7;
             transform: scale(0.95);
@@ -641,7 +646,7 @@
         </div>
     </div>
 
-    <!-- ===== 浮動導航 (修復: 加入 id 以便 JS 控制) ===== -->
+    <!-- ===== 浮動導航 ===== -->
     <div class="floating-nav" id="floating-nav">
         <div class="floating-nav-btn floating-toggle-btn" id="floating-toggle">全部顯示</div>
         <div class="floating-nav-btn" id="floating-prev">←</div>
@@ -688,8 +693,14 @@
             if (currentQuestionIndex >= 0) {
                 const prevIdx = currentQuestionIndex === 0 ? pathTitleList.length - 1 : currentQuestionIndex - 1;
                 const nextIdx = currentQuestionIndex === pathTitleList.length - 1 ? 0 : currentQuestionIndex + 1;
-                document.getElementById('prev-question').href = `2.html?q=${pathTitleList[prevIdx][0]}`;
-                document.getElementById('next-question').href = `2.html?q=${pathTitleList[nextIdx][0]}`;
+                document.getElementById('prev-question').href = `2.html?q=${pathTitleList[prevIdx][0]}&center=1`;
+                document.getElementById('next-question').href = `2.html?q=${pathTitleList[nextIdx][0]}&center=1`;
+								document.getElementById('prev-question').addEventListener('click', function() {
+										sessionStorage.setItem('centerNav', '1');
+								});
+								document.getElementById('next-question').addEventListener('click', function() {
+										sessionStorage.setItem('centerNav', '1');
+								});
             }
 
             // ----- 2. 圖層數據 -----
@@ -959,7 +970,7 @@
                     e.preventDefault(); }
             });
 
-            // ----- 11. 左右滑動切換幻燈片 -----
+            // ----- 11. 左右滑動切換幻燈片（觸控） -----
             const container = document.getElementById('images-container');
 
             container.addEventListener('touchstart', function(e) {
@@ -996,7 +1007,51 @@
                 touchMoved = false;
             }, { passive: true });
 
-            // ----- 12. 浮動導航拖動 (修復: 增加邊界保護) -----
+            // ----- 11.5 桌面端滑鼠拖曳切換（新增：修正電腦無法左右切換） -----
+            let isMouseDown = false;
+            let mouseStartX = 0;
+            let mouseStartY = 0;
+            const MOUSE_SWIPE_THRESHOLD = 40; // 滑鼠需拖曳的距離門檻（比觸控略大，避免誤觸）
+
+            container.addEventListener('mousedown', function(e) {
+                if (e.button !== 0) return;          // 只處理滑鼠左鍵
+                isMouseDown = true;
+                mouseStartX = e.clientX;
+                mouseStartY = e.clientY;
+                container.style.cursor = 'grabbing';
+                e.preventDefault();                   // 阻止選取文字 / 圖片原生拖曳
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isMouseDown) return;
+                const dx = e.clientX - mouseStartX;
+                const dy = e.clientY - mouseStartY;
+                // 拖曳方向提示游標
+                if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+                    container.style.cursor = dx < 0 ? 'w-resize' : 'e-resize';
+                } else {
+                    container.style.cursor = 'grabbing';
+                }
+            });
+
+            function endMouseDrag(e) {
+                if (!isMouseDown) return;
+                isMouseDown = false;
+                container.style.cursor = '';
+                const dx = e.clientX - mouseStartX;
+                const dy = e.clientY - mouseStartY;
+                if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > MOUSE_SWIPE_THRESHOLD) {
+                    switchSlide(dx < 0 ? 1 : 0);       // 往左拖 → 下一張；往右拖 → 上一張
+                }
+            }
+
+            document.addEventListener('mouseup', endMouseDrag);
+            window.addEventListener('blur', function() {
+                isMouseDown = false;
+                container.style.cursor = '';
+            });
+
+            // ----- 12. 浮動導航拖動 -----
             function handleDragStart(e) {
                 const clientX = e.clientX || (e.touches && e.touches[0].clientX);
                 const clientY = e.clientY || (e.touches && e.touches[0].clientY);
@@ -1070,68 +1125,75 @@
                 btn.addEventListener('touchstart', handleDragStart, { passive: true });
             });
 
-            // ----- 13. 修復: 驗證並恢復浮動導航位置 (核心修復) -----
+            // ----- 13. 驗證並恢復浮動導航位置 -----
             function restoreFloatingNavPosition() {
-                // 確保導航在可視區域內
-                const navWidth = floatingNav.offsetWidth || 60;
-                const navHeight = floatingNav.offsetHeight || 150;
-                const maxX = window.innerWidth - navWidth - 20;
-                const maxY = window.innerHeight - navHeight - 20;
-                const minX = 10;
-                const minY = 10;
+    const navWidth = floatingNav.offsetWidth || 60;
+    const navHeight = floatingNav.offsetHeight || 150;
+    const maxX = window.innerWidth - navWidth - 20;
+    const maxY = window.innerHeight - navHeight - 20;
+    const minX = 10;
+    const minY = 10;
 
-                // 先嘗試從 localStorage 讀取
-                const savedPos = localStorage.getItem('floatingNavPos');
-                let useDefault = true;
-                let leftPos = null;
-                let topPos = null;
+    // 偵測 F5 重新整理
+    const navEntries = performance.getEntriesByType && performance.getEntriesByType('navigation');
+    const isReload = (navEntries && navEntries.length > 0 && navEntries[0].type === 'reload')
+                     || (performance.navigation && performance.navigation.type === 1);
 
-                if (savedPos) {
-                    try {
-                        const pos = JSON.parse(savedPos);
-                        const left = parseFloat(pos.left);
-                        const top = parseFloat(pos.top);
-                        if (!isNaN(left) && !isNaN(top) && left >= minX && top >= minY && left <= maxX && top <= maxY) {
-                            leftPos = left;
-                            topPos = top;
-                            useDefault = false;
-                        }
-                    } catch (e) {}
+    // 偵測切換題目（由 URL 參數 center=1 判斷）
+    const isSwitchQuestion = new URLSearchParams(window.location.search).get('center') === '1';
+
+    if (isReload || isSwitchQuestion) {
+        // ===== 重新整理 或 切換題目 → 回到正中央 =====
+        floatingNav.style.left = ((window.innerWidth - navWidth) / 2) + 'px';
+        floatingNav.style.top = ((window.innerHeight - navHeight) / 2) + 'px';
+        floatingNav.style.right = 'auto';
+        try { localStorage.removeItem('floatingNavPos'); } catch (e) {}
+        // 注意：這裡不清除 URL 參數，讓 window load 的第二次呼叫也能居中
+    } else {
+        // ===== 其他情況 → 使用原本的 useDefault 邏輯 =====
+        const savedPos = localStorage.getItem('floatingNavPos');
+        let useDefault = true;
+        let leftPos = null;
+        let topPos = null;
+
+        if (savedPos) {
+            try {
+                const pos = JSON.parse(savedPos);
+                const left = parseFloat(pos.left);
+                const top = parseFloat(pos.top);
+                if (!isNaN(left) && !isNaN(top) && left >= minX && top >= minY && left <= maxX && top <= maxY) {
+                    leftPos = left;
+                    topPos = top;
+                    useDefault = false;
                 }
+            } catch (e) {}
+        }
 
-                if (useDefault) {
-                    // 使用 CSS 預設值 (右上角)
-                    floatingNav.style.right = '12px';
-                    floatingNav.style.top = '80px';
-                    floatingNav.style.left = 'auto';
-                    // 清除無效的 localStorage 記錄
-                    try {
-                        localStorage.removeItem('floatingNavPos');
-                    } catch (e) {}
-                } else {
-                    floatingNav.style.left = leftPos + 'px';
-                    floatingNav.style.top = topPos + 'px';
-                    floatingNav.style.right = 'auto';
-                }
+        if (useDefault) {
+            floatingNav.style.right = '12px';
+            floatingNav.style.top = '80px';
+            floatingNav.style.left = 'auto';
+            try { localStorage.removeItem('floatingNavPos'); } catch (e) {}
+        } else {
+            floatingNav.style.left = leftPos + 'px';
+            floatingNav.style.top = topPos + 'px';
+            floatingNav.style.right = 'auto';
+        }
+    }
 
-                // 強制確保 visible
-                floatingNav.style.opacity = '1';
-                floatingNav.style.visibility = 'visible';
-                floatingNav.style.display = 'flex';
-            }
+    floatingNav.style.opacity = '1';
+    floatingNav.style.visibility = 'visible';
+    floatingNav.style.display = 'flex';
+}
 
-            // 初始還原 (在 DOM 準備好後立即執行)
             restoreFloatingNavPosition();
 
-            // 在頁面完全載入後再驗證一次 (防止 layout 變化)
             window.addEventListener('load', function() {
-                // 延遲一點確保所有元素都已渲染
                 setTimeout(function() {
                     restoreFloatingNavPosition();
                 }, 50);
             });
 
-            // 窗口大小變化時重新校準
             let resizeTimer;
             window.addEventListener('resize', function() {
                 clearTimeout(resizeTimer);
@@ -1141,7 +1203,6 @@
                     const maxY = window.innerHeight - floatingNav.offsetHeight - 20;
                     const minX = 10;
                     const minY = 10;
-                    // 如果當前位置超出邊界，重置到默認位置
                     if (rect.left < minX || rect.top < minY || rect.right > window.innerWidth - 10 || rect.bottom > window
                         .innerHeight - 10) {
                         restoreFloatingNavPosition();
@@ -1157,7 +1218,7 @@
             viewLabel.textContent = '1 / 2  e0 圖';
 
             console.log('✅ 行動版已載入 | 題號:', q, ' 圖層數:', question_no);
-            console.log('💡 左右滑動圖片區域即可切換 e0.gif 與 0.gif');
+            console.log('💡 左右滑動或滑鼠拖曳圖片區域即可切換 e0.gif 與 0.gif');
             console.log('🔧 浮動導航位置已校準');
 
         });
