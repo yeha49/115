@@ -391,7 +391,7 @@
             transform: scale(0.95);
         }
 
-        /* ★ 新增：把「全部顯示」按鈕與提示文字包成直排 */
+        /* 把「全部顯示」按鈕與提示文字包成直排 */
         .floating-btn-wrap {
             display: flex;
             flex-direction: column;
@@ -399,11 +399,11 @@
             gap: 3px;
             flex-shrink: 0;
         }
-        /* ★ 新增：提示文字樣式 */
+        /* ★ 提示文字：字體大小與「全部顯示」按鈕相同（0.8rem） */
         .floating-hint {
-            font-size: 0.65rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(255, 255, 255, 0.95);
             white-space: nowrap;
             text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 6px rgba(0, 0, 0, 0.7);
             pointer-events: none;
@@ -421,7 +421,7 @@
             .floating-nav { top: 70px; right: 8px; gap: 4px; }
             .floating-nav-btn { width: 36px; height: 36px; font-size: 1rem; min-width: 36px; }
             .floating-nav-btn.floating-toggle-btn { min-width: 36px; padding: 0 10px; font-size: 0.7rem; }
-            .floating-hint { font-size: 0.6rem; }
+            .floating-hint { font-size: 0.7rem; }
             .view-indicator { padding: 4px 14px; bottom: 12px; gap: 10px; }
             .view-indicator .dot { width: 6px; height: 6px; }
             .view-indicator .page-label { font-size: 0.7rem; }
@@ -437,7 +437,7 @@
             .floating-nav { top: 58px; right: 6px; gap: 3px; }
             .floating-nav-btn { width: 32px; height: 32px; font-size: 0.85rem; min-width: 32px; }
             .floating-nav-btn.floating-toggle-btn { min-width: 32px; padding: 0 8px; font-size: 0.6rem; }
-            .floating-hint { font-size: 0.55rem; }
+            .floating-hint { font-size: 0.6rem; }
             .view-indicator { padding: 3px 12px; bottom: 10px; gap: 8px; }
             .view-indicator .dot { width: 5px; height: 5px; }
             .view-indicator .page-label { font-size: 0.65rem; }
@@ -456,7 +456,7 @@
             .floating-nav { top: 50px; right: 6px; gap: 3px; }
             .floating-nav-btn { width: 28px; height: 28px; font-size: 0.75rem; min-width: 28px; }
             .floating-nav-btn.floating-toggle-btn { min-width: 28px; padding: 0 6px; font-size: 0.55rem; }
-            .floating-hint { font-size: 0.5rem; }
+            .floating-hint { font-size: 0.55rem; }
             .question-indicator { font-size: 0.6rem; padding: 2px 8px; top: 6px; }
             .home-button, .nav-button { width: 28px; height: 28px; font-size: 0.75rem; }
         }
@@ -506,7 +506,7 @@
         </div>
     </div>
 
-    <!-- ★ 浮動導航：將「全部顯示」與「單擊放大/縮小」提示包成直排 -->
+    <!-- 浮動導航：將「全部顯示」與「單擊放大/縮小」提示包成直排 -->
     <div class="floating-nav" id="floating-nav">
         <div class="floating-btn-wrap">
             <div class="floating-nav-btn floating-toggle-btn" id="floating-toggle">全部顯示</div>
