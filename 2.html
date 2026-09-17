@@ -334,7 +334,7 @@
             position: fixed;
             display: flex;
             gap: 6px;
-            align-items: flex-start;
+            align-items: center;
             z-index: 1150;
             top: 80px;
             right: 12px;
@@ -393,6 +393,7 @@
 
         /* 把「全部顯示」按鈕與提示文字包成直排 */
         .floating-btn-wrap {
+						position: relative; 
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -401,6 +402,9 @@
         }
         /* ★ 提示文字：字體大小與「全部顯示」按鈕相同（0.8rem） */
         .floating-hint {
+						position: absolute;         /* ← 新增 */
+						left: 50%;                  /* ← 新增 */
+						transform: translateX(-50%);/* ← 新增 */
             font-size: 0.8rem;
             font-weight: 600;
             color: rgba(255, 255, 255, 0.95);
@@ -411,6 +415,15 @@
             line-height: 1;
         }
 
+				.floating-hint.hint-top {
+						bottom: 100%;
+						margin-bottom: 4px;
+				}
+				
+				.floating-hint.hint-bottom {
+						top: 100%;
+						margin-top: 4px;
+				}
         @media (max-width: 768px) {
             .question-indicator { font-size: 0.8rem; padding: 3px 12px; top: 10px; }
             .home-button, .nav-button { width: 36px; height: 36px; font-size: 1rem; }
@@ -472,7 +485,7 @@
         </a>
     </div>
     <div class="question-indicator" id="question-indicator">
-        第 <span id="current-question">5</span> 題 / 共 <span id="total-questions">8</span> 題
+        第 <span id="current-question">5</span> 題 / 共 <span id="total-questions">6</span> 題
     </div>
     <div class="question-nav">
         <a href="2.html?q=2-4" id="prev-question" class="nav-button">←</a>
@@ -508,14 +521,14 @@
 
     <!-- 浮動導航：將「全部顯示」與「單擊放大/縮小」提示包成直排 -->
     <div class="floating-nav" id="floating-nav">
-        <div class="floating-btn-wrap">
-						<div class="floating-hint">左右滑切換底圖</div>
-            <div class="floating-nav-btn floating-toggle-btn" id="floating-toggle">全部顯示</div>
-            <div class="floating-hint">單擊放大/縮小</div>
-        </div>
-        <div class="floating-nav-btn" id="floating-prev">←</div>
-        <div class="floating-nav-btn" id="floating-next">→</div>
-    </div>
+				<div class="floating-btn-wrap">
+						<div class="floating-hint hint-top">左右滑切換底圖</div>
+						<div class="floating-nav-btn floating-toggle-btn" id="floating-toggle">全部顯示</div>
+						<div class="floating-hint hint-bottom">單擊放大/縮小</div>
+				</div>
+				<div class="floating-nav-btn" id="floating-prev">←</div>
+				<div class="floating-nav-btn" id="floating-next">→</div>
+		</div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -527,8 +540,6 @@
                 ['2-4', '4. 污排水泵手動、自動交互兼異常水位並列運轉', '20'],
                 ['2-5', '5. 差動、調壓、調速迴路設計、裝配、運轉及調整', '19'],
                 ['2-6', '6. 蓄壓、鎖固、降壓迴路設計、裝配運轉及調整', '18'],
-                ['2-7', '7. 常用電源與備用電源自動切換', '16'],
-                ['2-8', '8. 三相三線負載之瓦時、乏時、功因、電壓、電流監視盤', '11']
             ];
 
             const urlParams = new URLSearchParams(window.location.search);
