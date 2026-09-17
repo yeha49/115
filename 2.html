@@ -477,7 +477,7 @@
                     <button class="nav-btn" id="next-layer">→</button>
                     <div class="buttons-row" id="buttons-row"></div>
                 </div>
-                <div class="key-hint">雙擊放大 / 再雙擊回復 ｜ 放大後長按拖動可移動畫面 ｜ 雙指縮放放開自動回復 ｜ 單指左右滑動切圖</div>
+                <div class="key-hint">單擊放大 / 再單擊縮小（行動）｜ 雙擊 / 滾輪（電腦）｜ 雙指縮放放開自動回復 ｜ 單指左右滑動切圖</div>
             </div>
         </div>
     </div>
@@ -575,12 +575,10 @@
             const DRAG_THRESHOLD = 5;
             const DRAG_DELAY = 200;
 
-            // ========== 觸控參數（放寬，讓平板更容易雙擊） ==========
-            const TAP_MOVE_TOLERANCE = 50;      // 手指移動小於此值 → 視為「點擊」（提高！）
-            const DOUBLE_TAP_DELAY = 500;       // 兩次點擊最大間隔
-            const DOUBLE_TAP_DIST = 90;         // 兩次點擊最大距離（提高！）
-            const PAN_DELAY = 220;              // 放大後要按住多久才允許單指拖動
-            const SWIPE_THRESHOLD = 30;
+            // ===== 觸控參數 =====
+            const TAP_MOVE_TOLERANCE = 30;   // ★ 單擊最大容許移動距離（讓平板/手機好點）
+            const SWIPE_THRESHOLD = 40;      // 左右切圖最小移動距離
+            const ZOOM_TO_SCALE = 2.5;       // 單擊 / 雙擊放大倍率
 
             let touchStartX = 0;
             let touchStartY = 0;
@@ -601,21 +599,12 @@
             let pinchLocalX = 0;
             let pinchLocalY = 0;
 
-            // ★ 單指平移：用「延遲啟用」機制
-            //   放大後，使用者點一下（快速）→ 視為 tap（參與雙擊判斷）
-            //   放大後，使用者按住超過 PAN_DELAY 毫秒才允許拖動畫面
-            let panTimer = null;
-            let panEnabled = false;
+            // 放大後單指拖動平移
             let isPanning = false;
             let panStartX = 0;
             let panStartY = 0;
             let panStartTx = 0;
             let panStartTy = 0;
-
-            // 雙擊追蹤
-            let lastTapTime = 0;
-            let lastTapX = 0;
-            let lastTapY = 0;
 
             function buildSlide(containerEl, slideIndex) {
                 containerEl.innerHTML = '';
@@ -882,14 +871,11 @@
             });
 
             // ============================================================
-            //  觸控手勢（重新設計）
-            //
-            //  核心改動：
-            //  1. TAP_MOVE_TOLERANCE 提高到 50px（平板點擊容易偏移）
-            //  2. 放大後，單指必須「按住超過 220ms 後才能拖動」
-            //     → 快速點兩下必定被辨識為 tap，不會變成拖動
-            //     → 想拖動畫面時，按住一下再拖即可
-            //  3. 雙擊距離、時間門檻都放寬
+            //  觸控手勢
+            //  - 單指點一下：放大 / 縮小切換
+            //  - 單指左右滑動（未放大）：切換 e0 / 0 圖
+            //  - 單指拖動（放大後）：平移畫面
+            //  - 雙指縮放：放手自動回復
             // ============================================================
 
             container.addEventListener('touchstart', function(e) {
@@ -897,12 +883,9 @@
                 // ---- 雙指 ----
                 if (e.touches.length === 2) {
                     e.preventDefault();
-                    clearTimeout(panTimer);
-                    panEnabled = false;
-                    isPanning = false;
-
                     isPinching = true;
                     pinchModeActive = true;
+                    isPanning = false;
                     touchMoved = true;
                     touchStartX = 0;
 
@@ -925,20 +908,11 @@
                     touchStartY = t.clientY;
                     touchMoved = false;
                     isPanning = false;
-                    panEnabled = false;
 
                     panStartX = t.clientX;
                     panStartY = t.clientY;
                     panStartTx = zoomTx;
                     panStartTy = zoomTy;
-
-                    // ★ 只有「已放大」才需要延遲啟用拖動
-                    clearTimeout(panTimer);
-                    if (zoomScale > 1.01) {
-                        panTimer = setTimeout(function() {
-                            panEnabled = true;
-                        }, PAN_DELAY);
-                    }
                 }
             }, { passive: false });
 
@@ -978,12 +952,16 @@
 
                     if (dist > TAP_MOVE_TOLERANCE) touchMoved = true;
 
-                    // ★ 只有 panEnabled（按住超過延遲時間）且移動超過 10px 才啟用平移
-                    if (panEnabled && !isPanning && dist > 10) {
-                        isPanning = true;
-                    }
-
-                    if (isPanning) {
+                    // 放大後移動超過容差 → 平移畫面
+                    if (zoomScale > 1.01 && dist > TAP_MOVE_TOLERANCE) {
+                        if (!isPanning) {
+                            // 剛進入平移：以當前位置重新校準，避免跳動
+                            isPanning = true;
+                            panStartX = t.clientX;
+                            panStartY = t.clientY;
+                            panStartTx = zoomTx;
+                            panStartTy = zoomTy;
+                        }
                         e.preventDefault();
                         zoomTx = panStartTx + (t.clientX - panStartX);
                         zoomTy = panStartTy + (t.clientY - panStartY);
@@ -999,85 +977,51 @@
                 if (e.touches.length >= 1) {
                     if (e.touches.length === 1) {
                         isPinching = false;
-                        clearTimeout(panTimer);
-                        panEnabled = false;
                         const t = e.touches[0];
                         touchStartX = 0;
+                        touchMoved = true;
+                        isPanning = false;
                         panStartX = t.clientX;
                         panStartY = t.clientY;
                         panStartTx = zoomTx;
                         panStartTy = zoomTy;
-                        isPanning = false;
-                        touchMoved = true;
                     }
                     return;
                 }
 
-                // ---- 所有手指都離開 ----
+                // ---- 全部手指都離開 ----
                 const wasPinchMode = pinchModeActive;
-                const wasPinching = isPinching;
+                const wasPanning = isPanning;
                 isPinching = false;
                 pinchModeActive = false;
-                const wasPanning = isPanning;
                 isPanning = false;
-                clearTimeout(panTimer);
-                panEnabled = false;
 
                 const touch = e.changedTouches[0];
-                const now = Date.now();
 
-                // ---- 雙指模式結束 → 自動縮回，不觸發其他 ----
+                // ---- 雙指模式結束 → 自動縮回原始大小 ----
                 if (wasPinchMode) {
                     if (zoomScale !== 1 || zoomTx !== 0 || zoomTy !== 0) {
                         resetZoom();
                     }
                     touchStartX = 0;
                     touchMoved = false;
-                    lastTapTime = 0;
                     return;
                 }
 
-                // ---- 計算移動距離 ----
-                let moveDist = 999;
-                if (touchStartX) {
-                    const mdx = touch.clientX - touchStartX;
-                    const mdy = touch.clientY - touchStartY;
-                    moveDist = Math.sqrt(mdx * mdx + mdy * mdy);
-                }
-
-                // ★ 是否為 tap：沒平移過、移動夠小
-                const isTap = !wasPanning && moveDist < TAP_MOVE_TOLERANCE;
+                // ---- 判斷是否為「單擊」（沒有拖動、沒有平移）----
+                const isTap = !wasPanning && !touchMoved && touchStartX !== 0;
 
                 if (isTap) {
-                    const timeSinceLast = now - lastTapTime;
-                    const ddx = touch.clientX - lastTapX;
-                    const ddy = touch.clientY - lastTapY;
-                    const distFromLast = Math.sqrt(ddx * ddx + ddy * ddy);
-
-                    if (lastTapTime > 0 &&
-                        timeSinceLast < DOUBLE_TAP_DELAY &&
-                        distFromLast < DOUBLE_TAP_DIST) {
-                        // ★★★ 雙擊觸發 ★★★
-                        if (zoomScale > 1.01) {
-                            resetZoom();
-                        } else {
-                            zoomToPoint(touch.clientX, touch.clientY, 2.5);
-                        }
-                        lastTapTime = 0;
-                        lastTapX = 0;
-                        lastTapY = 0;
+                    // ★ 單擊切換放大 / 縮小
+                    if (zoomScale > 1.01) {
+                        resetZoom();
                     } else {
-                        // 記錄第一次點擊
-                        lastTapTime = now;
-                        lastTapX = touch.clientX;
-                        lastTapY = touch.clientY;
+                        zoomToPoint(touch.clientX, touch.clientY, ZOOM_TO_SCALE);
                     }
-                } else {
-                    lastTapTime = 0;
                 }
 
-                // ---- 左右滑動切頁（未放大、非平移、非雙指）----
-                if (!wasPinching && !wasPanning && zoomScale <= 1.01 && touchStartX && touchMoved) {
+                // ---- 左右滑動切頁（未放大、非平移）----
+                if (!wasPanning && zoomScale <= 1.01 && touchStartX && touchMoved) {
                     const sdx = touch.clientX - touchStartX;
                     const sdy = touch.clientY - touchStartY;
                     if (Math.abs(sdx) > Math.abs(sdy) && Math.abs(sdx) > SWIPE_THRESHOLD) {
@@ -1096,7 +1040,9 @@
                 touchMoved = false;
             }, { passive: true });
 
-            // ========== 桌面端 ==========
+            // ============================================================
+            //  電腦端：滑鼠雙擊放大/縮小、滾輪縮放、拖曳切圖
+            // ============================================================
             let isMouseDown = false;
             let mouseStartX = 0;
             let mouseStartY = 0;
@@ -1117,6 +1063,7 @@
 
             document.addEventListener('mousemove', function(e) {
                 if (!isMouseDown) return;
+                // 放大時 → 平移畫面
                 if (zoomScale > 1.01) {
                     zoomTx = mouseStartTx + (e.clientX - mouseStartX);
                     zoomTy = mouseStartTy + (e.clientY - mouseStartY);
@@ -1152,13 +1099,13 @@
                 container.style.cursor = '';
             });
 
-            // 桌面端雙擊
+            // ★ 電腦端雙擊放大 / 縮小
             container.addEventListener('dblclick', function(e) {
                 if (zoomScale > 1.01) resetZoom();
-                else zoomToPoint(e.clientX, e.clientY, 2.5);
+                else zoomToPoint(e.clientX, e.clientY, ZOOM_TO_SCALE);
             });
 
-            // 桌面端滾輪縮放
+            // ★ 電腦端滾輪縮放
             container.addEventListener('wheel', function(e) {
                 e.preventDefault();
                 const rect = container.getBoundingClientRect();
@@ -1336,7 +1283,7 @@
             applyZoom(false);
 
             console.log('✅ 行動版已載入 | 題號:', q, ' 圖層數:', question_no);
-            console.log('💡 雙擊放大 / 再雙擊回復；放大後長按拖動；雙指縮放放開自動回復');
+            console.log('💡 單擊放大 / 再單擊縮小（行動）；雙擊 / 滾輪（電腦）；雙指縮放放開自動回復；單指左右滑動切圖');
 
         });
     </script>
