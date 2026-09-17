@@ -334,6 +334,7 @@
             position: fixed;
             display: flex;
             gap: 6px;
+            align-items: flex-start;
             z-index: 1150;
             top: 80px;
             right: 12px;
@@ -390,6 +391,26 @@
             transform: scale(0.95);
         }
 
+        /* ★ 新增：把「全部顯示」按鈕與提示文字包成直排 */
+        .floating-btn-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            flex-shrink: 0;
+        }
+        /* ★ 新增：提示文字樣式 */
+        .floating-hint {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 6px rgba(0, 0, 0, 0.7);
+            pointer-events: none;
+            letter-spacing: 0.3px;
+            line-height: 1;
+        }
+
         @media (max-width: 768px) {
             .question-indicator { font-size: 0.8rem; padding: 3px 12px; top: 10px; }
             .home-button, .nav-button { width: 36px; height: 36px; font-size: 1rem; }
@@ -400,6 +421,7 @@
             .floating-nav { top: 70px; right: 8px; gap: 4px; }
             .floating-nav-btn { width: 36px; height: 36px; font-size: 1rem; min-width: 36px; }
             .floating-nav-btn.floating-toggle-btn { min-width: 36px; padding: 0 10px; font-size: 0.7rem; }
+            .floating-hint { font-size: 0.6rem; }
             .view-indicator { padding: 4px 14px; bottom: 12px; gap: 10px; }
             .view-indicator .dot { width: 6px; height: 6px; }
             .view-indicator .page-label { font-size: 0.7rem; }
@@ -415,6 +437,7 @@
             .floating-nav { top: 58px; right: 6px; gap: 3px; }
             .floating-nav-btn { width: 32px; height: 32px; font-size: 0.85rem; min-width: 32px; }
             .floating-nav-btn.floating-toggle-btn { min-width: 32px; padding: 0 8px; font-size: 0.6rem; }
+            .floating-hint { font-size: 0.55rem; }
             .view-indicator { padding: 3px 12px; bottom: 10px; gap: 8px; }
             .view-indicator .dot { width: 5px; height: 5px; }
             .view-indicator .page-label { font-size: 0.65rem; }
@@ -433,6 +456,7 @@
             .floating-nav { top: 50px; right: 6px; gap: 3px; }
             .floating-nav-btn { width: 28px; height: 28px; font-size: 0.75rem; min-width: 28px; }
             .floating-nav-btn.floating-toggle-btn { min-width: 28px; padding: 0 6px; font-size: 0.55rem; }
+            .floating-hint { font-size: 0.5rem; }
             .question-indicator { font-size: 0.6rem; padding: 2px 8px; top: 6px; }
             .home-button, .nav-button { width: 28px; height: 28px; font-size: 0.75rem; }
         }
@@ -482,8 +506,12 @@
         </div>
     </div>
 
+    <!-- ★ 浮動導航：將「全部顯示」與「單擊放大/縮小」提示包成直排 -->
     <div class="floating-nav" id="floating-nav">
-        <div class="floating-nav-btn floating-toggle-btn" id="floating-toggle">全部顯示</div>
+        <div class="floating-btn-wrap">
+            <div class="floating-nav-btn floating-toggle-btn" id="floating-toggle">全部顯示</div>
+            <div class="floating-hint">單擊放大/縮小</div>
+        </div>
         <div class="floating-nav-btn" id="floating-prev">←</div>
         <div class="floating-nav-btn" id="floating-next">→</div>
     </div>
@@ -576,9 +604,9 @@
             const DRAG_DELAY = 200;
 
             // ===== 觸控參數 =====
-            const TAP_MOVE_TOLERANCE = 30;   // ★ 單擊最大容許移動距離（讓平板/手機好點）
-            const SWIPE_THRESHOLD = 40;      // 左右切圖最小移動距離
-            const ZOOM_TO_SCALE = 2.5;       // 單擊 / 雙擊放大倍率
+            const TAP_MOVE_TOLERANCE = 30;
+            const SWIPE_THRESHOLD = 40;
+            const ZOOM_TO_SCALE = 2.5;
 
             let touchStartX = 0;
             let touchStartY = 0;
@@ -599,7 +627,6 @@
             let pinchLocalX = 0;
             let pinchLocalY = 0;
 
-            // 放大後單指拖動平移
             let isPanning = false;
             let panStartX = 0;
             let panStartY = 0;
@@ -872,15 +899,9 @@
 
             // ============================================================
             //  觸控手勢
-            //  - 單指點一下：放大 / 縮小切換
-            //  - 單指左右滑動（未放大）：切換 e0 / 0 圖
-            //  - 單指拖動（放大後）：平移畫面
-            //  - 雙指縮放：放手自動回復
             // ============================================================
 
             container.addEventListener('touchstart', function(e) {
-
-                // ---- 雙指 ----
                 if (e.touches.length === 2) {
                     e.preventDefault();
                     isPinching = true;
@@ -901,7 +922,6 @@
                     return;
                 }
 
-                // ---- 單指 ----
                 if (e.touches.length === 1) {
                     const t = e.touches[0];
                     touchStartX = t.clientX;
@@ -917,8 +937,6 @@
             }, { passive: false });
 
             container.addEventListener('touchmove', function(e) {
-
-                // ---- 雙指縮放 ----
                 if (e.touches.length >= 2) {
                     if (!isPinching) return;
                     e.preventDefault();
@@ -943,7 +961,6 @@
                     return;
                 }
 
-                // ---- 單指 ----
                 if (e.touches.length === 1) {
                     const t = e.touches[0];
                     const dx = t.clientX - touchStartX;
@@ -952,10 +969,8 @@
 
                     if (dist > TAP_MOVE_TOLERANCE) touchMoved = true;
 
-                    // 放大後移動超過容差 → 平移畫面
                     if (zoomScale > 1.01 && dist > TAP_MOVE_TOLERANCE) {
                         if (!isPanning) {
-                            // 剛進入平移：以當前位置重新校準，避免跳動
                             isPanning = true;
                             panStartX = t.clientX;
                             panStartY = t.clientY;
@@ -972,8 +987,6 @@
             }, { passive: false });
 
             container.addEventListener('touchend', function(e) {
-
-                // ---- 還有手指在螢幕上（雙指放開一根）----
                 if (e.touches.length >= 1) {
                     if (e.touches.length === 1) {
                         isPinching = false;
@@ -989,7 +1002,6 @@
                     return;
                 }
 
-                // ---- 全部手指都離開 ----
                 const wasPinchMode = pinchModeActive;
                 const wasPanning = isPanning;
                 isPinching = false;
@@ -998,7 +1010,6 @@
 
                 const touch = e.changedTouches[0];
 
-                // ---- 雙指模式結束 → 自動縮回原始大小 ----
                 if (wasPinchMode) {
                     if (zoomScale !== 1 || zoomTx !== 0 || zoomTy !== 0) {
                         resetZoom();
@@ -1008,11 +1019,9 @@
                     return;
                 }
 
-                // ---- 判斷是否為「單擊」（沒有拖動、沒有平移）----
                 const isTap = !wasPanning && !touchMoved && touchStartX !== 0;
 
                 if (isTap) {
-                    // ★ 單擊切換放大 / 縮小
                     if (zoomScale > 1.01) {
                         resetZoom();
                     } else {
@@ -1020,7 +1029,6 @@
                     }
                 }
 
-                // ---- 左右滑動切頁（未放大、非平移）----
                 if (!wasPanning && zoomScale <= 1.01 && touchStartX && touchMoved) {
                     const sdx = touch.clientX - touchStartX;
                     const sdy = touch.clientY - touchStartY;
@@ -1030,7 +1038,6 @@
                     }
                 }
 
-                // ---- 保險：接近原始大小仍有偏移 → 歸位 ----
                 if (zoomScale <= 1.01 && (zoomScale !== 1 || zoomTx !== 0 || zoomTy !== 0)) {
                     resetZoom();
                 }
@@ -1040,9 +1047,7 @@
                 touchMoved = false;
             }, { passive: true });
 
-            // ============================================================
-            //  電腦端：滑鼠雙擊放大/縮小、滾輪縮放、拖曳切圖
-            // ============================================================
+            // ========== 桌面端 ==========
             let isMouseDown = false;
             let mouseStartX = 0;
             let mouseStartY = 0;
@@ -1063,7 +1068,6 @@
 
             document.addEventListener('mousemove', function(e) {
                 if (!isMouseDown) return;
-                // 放大時 → 平移畫面
                 if (zoomScale > 1.01) {
                     zoomTx = mouseStartTx + (e.clientX - mouseStartX);
                     zoomTy = mouseStartTy + (e.clientY - mouseStartY);
@@ -1099,13 +1103,11 @@
                 container.style.cursor = '';
             });
 
-            // ★ 電腦端雙擊放大 / 縮小
             container.addEventListener('dblclick', function(e) {
                 if (zoomScale > 1.01) resetZoom();
                 else zoomToPoint(e.clientX, e.clientY, ZOOM_TO_SCALE);
             });
 
-            // ★ 電腦端滾輪縮放
             container.addEventListener('wheel', function(e) {
                 e.preventDefault();
                 const rect = container.getBoundingClientRect();
