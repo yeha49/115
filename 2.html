@@ -477,7 +477,7 @@
                     <button class="nav-btn" id="next-layer">→</button>
                     <div class="buttons-row" id="buttons-row"></div>
                 </div>
-                <div class="key-hint">雙擊放大／再雙擊回復 ｜ 雙指縮放（放開自動回復）｜ 單指左右滑動切換 e0 / 0 圖</div>
+                <div class="key-hint">雙擊放大 / 再雙擊回復 ｜ 雙指縮放放開自動回復 ｜ 單指左右滑動切換 e0 / 0 圖</div>
             </div>
         </div>
     </div>
@@ -578,9 +578,13 @@
             // ===== 觸控狀態 =====
             let touchStartX = 0;
             let touchStartY = 0;
-            let touchStartTime = 0;
             let touchMoved = false;
             const SWIPE_THRESHOLD = 30;
+
+            // ★ 容錯參數（提高，讓雙擊更容易成功）
+            const TAP_MOVE_TOLERANCE = 28;    // 手指移動小於此值視為「點擊」
+            const DOUBLE_TAP_DELAY = 480;     // 雙擊最大間隔
+            const DOUBLE_TAP_DIST = 70;       // 兩次點擊最大距離
 
             // 縮放 / 平移
             let zoomScale = 1;
@@ -591,14 +595,13 @@
             let zoomBoxes = [];
 
             let isPinching = false;
-            let pinchModeActive = false;    // 本次觸碰是否進入過雙指模式（放開自動回復）
+            let pinchModeActive = false;
             let pinchStartDist = 0;
             let pinchStartScale = 1;
             let pinchLocalX = 0;
             let pinchLocalY = 0;
 
-            // 單指平移：分兩階段（pendingPan → 真正 isPanning），以便區分「輕點」與「拖動」
-            let pendingPan = false;
+            // 單指平移（等到確實拖動超過閾值才啟用）
             let isPanning = false;
             let panStartX = 0;
             let panStartY = 0;
@@ -609,9 +612,6 @@
             let lastTapTime = 0;
             let lastTapX = 0;
             let lastTapY = 0;
-            const DOUBLE_TAP_DELAY = 350;
-            const DOUBLE_TAP_DIST = 50;
-            const TAP_MOVE_TOLERANCE = 12;   // 指尖移動小於此值視為「點擊」
 
             function buildSlide(containerEl, slideIndex) {
                 containerEl.innerHTML = '';
@@ -678,7 +678,6 @@
                 applyZoom(true);
             }
 
-            // 以某個螢幕座標為中心放大
             function zoomToPoint(clientX, clientY, targetScale) {
                 const rect = container.getBoundingClientRect();
                 const cx = clientX - rect.left - rect.width / 2;
@@ -879,11 +878,7 @@
             });
 
             // ============================================================
-            //  觸控手勢
-            //  - 雙指：縮放/拖動；放開自動回復原始大小
-            //  - 單指點擊兩次：放大；再點兩次：回復
-            //  - 單指拖動（未放大）：左右切換 e0 / 0 圖
-            //  - 單指拖動（放大時）：平移圖片
+            //  觸控手勢（簡化版：以「總移動距離」判斷是否為 tap）
             // ============================================================
 
             container.addEventListener('touchstart', function(e) {
@@ -893,7 +888,6 @@
                     e.preventDefault();
                     isPinching = true;
                     pinchModeActive = true;
-                    pendingPan = false;
                     isPanning = false;
                     touchMoved = true;
                     touchStartX = 0;
@@ -915,28 +909,19 @@
                     const t = e.touches[0];
                     touchStartX = t.clientX;
                     touchStartY = t.clientY;
-                    touchStartTime = Date.now();
                     touchMoved = false;
 
-                    // 放大狀態下先「待命」，等手指實際拖動才進入 pan
-                    // 這樣「輕點」才能被視為雙擊的一部份
-                    if (zoomScale > 1.01) {
-                        pendingPan = true;
-                        isPanning = false;
-                        panStartX = t.clientX;
-                        panStartY = t.clientY;
-                        panStartTx = zoomTx;
-                        panStartTy = zoomTy;
-                    } else {
-                        pendingPan = false;
-                        isPanning = false;
-                    }
+                    panStartX = t.clientX;
+                    panStartY = t.clientY;
+                    panStartTx = zoomTx;
+                    panStartTy = zoomTy;
+                    isPanning = false;   // 等到移動超過閾值才啟用
                 }
             }, { passive: false });
 
             container.addEventListener('touchmove', function(e) {
 
-                // ---- 雙指 ----
+                // ---- 雙指縮放 ----
                 if (e.touches.length >= 2) {
                     if (!isPinching) return;
                     e.preventDefault();
@@ -966,48 +951,37 @@
                     const t = e.touches[0];
                     const dx = t.clientX - touchStartX;
                     const dy = t.clientY - touchStartY;
-                    const moveDist = Math.sqrt(dx * dx + dy * dy);
+                    const dist = Math.sqrt(dx * dx + dy * dy);
 
-                    // 若之前在放大狀態下待命，且移動超過容忍值 → 進入平移
-                    if (pendingPan && moveDist > TAP_MOVE_TOLERANCE) {
+                    if (dist > TAP_MOVE_TOLERANCE) touchMoved = true;
+
+                    // 放大狀態下：移動超過容忍值才進入平移
+                    if (zoomScale > 1.01 && dist > TAP_MOVE_TOLERANCE) {
                         isPanning = true;
-                        pendingPan = false;
-                    }
-
-                    if (isPanning) {
                         e.preventDefault();
                         zoomTx = panStartTx + (t.clientX - panStartX);
                         zoomTy = panStartTy + (t.clientY - panStartY);
                         clampZoom();
                         applyZoom(false);
-                        touchMoved = true;
                         return;
                     }
-
-                    if (moveDist > 10) touchMoved = true;
                 }
             }, { passive: false });
 
             container.addEventListener('touchend', function(e) {
 
-                // ---- 還有手指在螢幕上（例如雙指放開一根）----
+                // ---- 還有手指在螢幕上（雙指放開一根）----
                 if (e.touches.length >= 1) {
                     if (e.touches.length === 1) {
                         isPinching = false;
                         const t = e.touches[0];
-                        // 從雙指變單指：若已放大，允許直接開始拖動
-                        if (zoomScale > 1.01) {
-                            pendingPan = true;
-                            isPanning = false;
-                            panStartX = t.clientX;
-                            panStartY = t.clientY;
-                            panStartTx = zoomTx;
-                            panStartTy = zoomTy;
-                        } else {
-                            pendingPan = false;
-                            isPanning = false;
-                        }
+                        // 從雙指變單指：重置單指起始點（避免誤判 tap）
                         touchStartX = 0;
+                        panStartX = t.clientX;
+                        panStartY = t.clientY;
+                        panStartTx = zoomTx;
+                        panStartTy = zoomTy;
+                        isPanning = false;
                         touchMoved = true;
                     }
                     return;
@@ -1015,16 +989,16 @@
 
                 // ---- 全部手指離開 ----
                 const wasPinchMode = pinchModeActive;
+                const wasPinching = isPinching;
                 isPinching = false;
                 pinchModeActive = false;
                 const wasPanning = isPanning;
                 isPanning = false;
-                pendingPan = false;
 
                 const touch = e.changedTouches[0];
                 const now = Date.now();
 
-                // ---- 若本次觸碰曾進入雙指模式 → 自動縮回原始大小，不觸發其他 ----
+                // ---- 雙指模式結束 → 自動縮回，不觸發其他 ----
                 if (wasPinchMode) {
                     if (zoomScale !== 1 || zoomTx !== 0 || zoomTy !== 0) {
                         resetZoom();
@@ -1035,50 +1009,61 @@
                     return;
                 }
 
-                // ---- 判斷是否為「點擊」（沒有移動） ----
-                const isTap = !touchMoved && !wasPanning && touchStartX !== 0;
+                // ---- 計算總移動距離，判斷是否為 tap ----
+                let moveDist = 999;
+                if (touchStartX) {
+                    const mdx = touch.clientX - touchStartX;
+                    const mdy = touch.clientY - touchStartY;
+                    moveDist = Math.sqrt(mdx * mdx + mdy * mdy);
+                }
+                const isTap = !wasPanning && moveDist < TAP_MOVE_TOLERANCE;
 
                 if (isTap) {
-                    // 雙擊判定：時間與距離都在門檻內
-                    if (now - lastTapTime < DOUBLE_TAP_DELAY &&
-                        Math.abs(touch.clientX - lastTapX) < DOUBLE_TAP_DIST &&
-                        Math.abs(touch.clientY - lastTapY) < DOUBLE_TAP_DIST) {
+                    const timeSinceLast = now - lastTapTime;
+                    const ddx = touch.clientX - lastTapX;
+                    const ddy = touch.clientY - lastTapY;
+                    const distFromLast = Math.sqrt(ddx * ddx + ddy * ddy);
 
+                    if (lastTapTime > 0 &&
+                        timeSinceLast < DOUBLE_TAP_DELAY &&
+                        distFromLast < DOUBLE_TAP_DIST) {
+                        // ★ 雙擊觸發
                         if (zoomScale > 1.01) {
-                            // 已放大 → 回復原始大小
                             resetZoom();
                         } else {
-                            // 原始大小 → 放大到 2.5 倍
                             zoomToPoint(touch.clientX, touch.clientY, 2.5);
                         }
                         lastTapTime = 0;
+                        lastTapX = 0;
+                        lastTapY = 0;
                     } else {
-                        // 第一次點擊，記錄下來等下一次
+                        // 記錄第一次點擊
                         lastTapTime = now;
                         lastTapX = touch.clientX;
                         lastTapY = touch.clientY;
                     }
                 } else {
-                    // 不是點擊（有拖動或平移）→ 清掉雙擊的記憶，避免誤觸
+                    // 有拖動 → 清掉雙擊記憶
                     lastTapTime = 0;
                 }
 
-                // ---- 左右滑動切頁（僅在未放大、非平移、非雙指時）----
-                if (!wasPanning && zoomScale <= 1.01 && touchStartX && touchMoved) {
-                    const dx = touch.clientX - touchStartX;
-                    const dy = touch.clientY - touchStartY;
-                    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > SWIPE_THRESHOLD) {
-                        if (dx < 0) switchSlide(currentSlide === 0 ? 1 : 0);
+                // ---- 左右滑動切頁（未放大、非平移、非雙指）----
+                if (!wasPinching && !wasPanning && zoomScale <= 1.01 && touchStartX && touchMoved) {
+                    const sdx = touch.clientX - touchStartX;
+                    const sdy = touch.clientY - touchStartY;
+                    if (Math.abs(sdx) > Math.abs(sdy) && Math.abs(sdx) > SWIPE_THRESHOLD) {
+                        if (sdx < 0) switchSlide(currentSlide === 0 ? 1 : 0);
                         else switchSlide(currentSlide === 1 ? 0 : 1);
                     }
                 }
 
-                // ---- 保險：接近原始大小仍有微小偏移 → 歸位 ----
+                // ---- 保險：接近原始大小仍有偏移 → 歸位 ----
                 if (zoomScale <= 1.01 && (zoomScale !== 1 || zoomTx !== 0 || zoomTy !== 0)) {
                     resetZoom();
                 }
 
                 touchStartX = 0;
+                touchStartY = 0;
                 touchMoved = false;
             }, { passive: true });
 
